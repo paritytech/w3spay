@@ -1,0 +1,36 @@
+{
+  "name": "@parity/w3spay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5174 --strictPort",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "deploy": "./deploy.sh",
+    "start": "vite --host 0.0.0.0 --port 5174 --strictPort",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@novasamatech/host-api": "0.7.8-2",
+    "@novasamatech/product-sdk": "0.7.8-2",
+    "@parity/product-sdk-coin-payment": "file:./tools/product-sdk-packs/parity-product-sdk-coin-payment-0.0.0.tgz",
+    "@parity/product-sdk-host": "file:./tools/product-sdk-packs/parity-product-sdk-host-0.3.0.tgz",
+    "@polkadot-api/json-rpc-provider": "0.2.0",
+    "html5-qrcode": "^2.3.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "vite": "^7.1.12",
+    "vitest": "^3.0.0"
+  },
+  "overrides": {
+    "@novasamatech/product-sdk": {
+      "@polkadot-api/json-rpc-provider": "1.0.0-canary.f7f4b6e"
+    },
+    "@substrate/connect": {
+      "@polkadot-api/json-rpc-provider": "0.0.1"
+    }
+  }
+}

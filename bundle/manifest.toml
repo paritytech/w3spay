@@ -1,0 +1,19 @@
+[app]
+id = "w3spay.dot"
+name = "W3SPay"
+version = "0.1.0"
+app_type = "spa"
+
+[webapp]
+entry = "index.html"
+sandbox = "strict"
+
+[extensions]
+# RFC 0006 (Coinage payment) — the only host extension required for the
+# tomorrow-MVP customer flow.
+use_extensions = ["host.coinpayment"]
+
+# Camera access is requested at runtime through `navigator.mediaDevices
+# .getUserMedia` (and, when the host exposes it on the wire, through
+# `host_device_permission(Camera)` per RFC 0002). The host webview prompts
+# the user on the first `getUserMedia` call.

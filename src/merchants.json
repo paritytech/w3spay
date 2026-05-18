@@ -1,0 +1,25 @@
+{
+  "FISKALY-DEMO-001": {
+    "merchantId": "funkhaus",
+    "terminalId": "bar-east-01",
+    "smartContractAddress": "0xA2E388421467E0193570Af45Bd03F0F379c47E88",
+    "displayName": "Bar East (Funkhaus)",
+    "addedAt": "2026-06-01T00:00:00Z"
+  },
+
+  "SWISSBIT-DEMO-001": {
+    "merchantId": "funkhaus",
+    "terminalId": "bar-west-01",
+    "smartContractAddress": "0xA2E388421467E0193570Af45Bd03F0F379c47E88",
+    "displayName": "Bar West (Funkhaus)",
+    "addedAt": "2026-06-01T00:00:00Z"
+  },
+
+  "955002-00": {
+    "merchantId": "demo-bakery",
+    "terminalId": "register-01",
+    "smartContractAddress": "0xA2E388421467E0193570Af45Bd03F0F379c47E88",
+    "displayName": "APL Demo Bakery (Berlin)",
+    "addedAt": "2026-06-01T00:00:00Z"
+  }
+}
