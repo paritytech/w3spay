@@ -11,11 +11,12 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
+    "jsx": "react-jsx",
     "types": ["vitest/globals"],
     "paths": {
       "@/*": ["./*"]
     }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vite-env.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "vite-env.d.ts"],
   "exclude": ["node_modules"]
 }

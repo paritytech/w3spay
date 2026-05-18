@@ -54,7 +54,7 @@ export async function startQrScanner(
   let decodedOnce = false;
   try {
     await scanner.start(
-      { facingMode: { ideal: "environment" } },
+      { facingMode: "environment" },
       {
         fps: 10,
         qrbox: (viewfinderWidth, viewfinderHeight) => {
