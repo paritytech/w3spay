@@ -1,0 +1,12 @@
+[app]
+id = "w3spay.dot"
+name = "W3SPay"
+version = "0.1.0"
+app_type = "spa"
+
+[webapp]
+entry = "index.html"
+sandbox = "strict"
+
+[extensions]
+use_extensions = ["host.coinpayment", "host.data", "host.media", "host.balance", "host.api", "host.browser.bridge"]

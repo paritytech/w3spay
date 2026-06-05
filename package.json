@@ -1,0 +1,46 @@
+{
+  "name": "@parity/t3rminal-w3spay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5174 --strictPort",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "deploy": "./deploy.sh",
+    "start": "vite --host 0.0.0.0 --port 5174 --strictPort",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@novasamatech/host-api": "0.8.4",
+    "@novasamatech/host-api-wrapper": "0.8.4",
+    "@polkadot-api/signers-common": "^0.2.3",
+    "@polkadot-api/substrate-bindings": "^0.20.1",
+    "@polkadot-api/utils": "^0.4.0",
+    "@polkadot-api/ws-provider": "^0.9.0",
+    "@sentry/react": "^8.55.2",
+    "@tanstack/react-query": "^5.100.14",
+    "@tanstack/react-router": "^1.170.11",
+    "ethers": "^6.16.0",
+    "polkadot-api": "^2.1.2",
+    "qr-scanner": "^1.4.2",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "viem": "^2.46.2",
+    "zustand": "^5.0.13",
+    "zxing-wasm": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.0.4",
+    "bulletin-deploy": "^0.8.3",
+    "esbuild": "^0.27.7",
+    "typescript": "^5",
+    "vite": "^7.1.12",
+    "vitest": "^3.0.0"
+  }
+}

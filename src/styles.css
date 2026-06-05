@@ -1,0 +1,1724 @@
+/*
+ * W3SPay — LocalDOT-grounded editorial styling.
+ *
+ * Tokens lifted from `apps/w3spay/contracts/.../localdot-tokens.css`. Three
+ * families: DM Serif Display for editorial headlines, DM Sans for body /
+ * buttons / labels, JetBrains Mono for IDs and amounts. Warm-stone
+ * monochrome palette, borders-first depth, no shadows on cards.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Neutrals — stone palette */
+  --color-bg:                 #0f0f0f;
+  --color-surface:            #1c1917;
+  --color-surface-secondary:  #292524;
+  --color-surface-tertiary:   #44403c;
+
+  /* Foreground */
+  --color-text-primary:       #fafaf9;
+  --color-text-secondary:     #d6d3d1;
+  --color-text-tertiary:      #a8a29e;
+  --color-text-muted:         #78716c;
+  --color-text-faint:         #57534e;
+
+  /* Borders */
+  --color-border:             #44403c;
+  --color-border-strong:      #57534e;
+  --color-border-subtle:      #292524;
+
+  /* Accent — just a brighter neutral */
+  --color-accent:             #fafaf9;
+  --color-accent-hover:       #f5f5f4;
+  --color-accent-on:          #1c1917;
+
+  /* Semantic state */
+  --color-success:            #22c55e;
+  --color-success-soft:       rgba(34, 197, 94, 0.12);
+  --color-warning:            #f59e0b;
+  --color-danger:             #ef4444;
+  --color-danger-soft:        rgba(239, 68, 68, 0.12);
+
+  /* Type families */
+  --font-sans:   'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-serif:  'DM Serif Display', Georgia, serif;
+  --font-mono:   'JetBrains Mono', 'Courier New', monospace;
+
+  /* Tracking */
+  --tracking-tight:    -0.02em;
+  --tracking-tighter:  -0.03em;
+  --tracking-wide:      0.08em;
+  --tracking-wider:     0.12em;
+  --tracking-eyebrow:   0.20em;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radii */
+  --radius-sm:   8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --radius-full: 9999px;
+
+  /* The whole UI lives inside this width inside the dotli iframe. */
+  --app-max-width: 430px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  min-height: 100%;
+  /*
+   * Suppress iOS WebKit's rubber-band scroll. Without this, two-finger
+   * gestures over the live camera (pinch-to-zoom) drag the surrounding
+   * page up and down even though nothing is scrollable.
+   */
+  overscroll-behavior: none;
+}
+
+body {
+  font: 400 14px/1.5 var(--font-sans);
+  font-feature-settings: 'liga' 1, 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /*
+   * Fixed-height app: every screen draws inside the dynamic viewport
+   * box. Internal lists (e.g. history) opt into their own scroll;
+   * the page itself never scrolls.
+   */
+  height: 100dvh;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  justify-content: center;
+}
+
+/* The workspace fills the dotli iframe, capped to a phone-ish width. */
+.workspace {
+  position: relative;
+  width: 100%;
+  max-width: var(--app-max-width);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Dummy-balance banner ────────────────────────────────────
+ * Shown when the host couldn't read the user's real balance and the
+ * flow is running on `DUMMY_BALANCE_CENTS`. Sits at the top of the
+ * workspace, above the editorial frame; uses the warn token so it's
+ * visible without feeling like an error.
+ */
+.dummy-balance-banner {
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(245, 158, 11, 0.12);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.dummy-balance-banner__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+.dummy-balance-banner__text {
+  flex: 1;
+}
+
+.dummy-balance-banner__label {
+  font-weight: 600;
+  color: var(--color-warning);
+}
+
+/* ── Dev manual-payment launcher ─────────────────────────────
+ * Persistent pill anchored to the workspace bottom-right corner. Only
+ * mounts when `features.devPaymentOverride` is on; sits inside the 24px
+ * frame bottom-space (below any sticky footer button) and over the
+ * scanner's empty area beneath the balance chip — accessible from every
+ * screen without per-screen wiring.
+ */
+.dev-pay-launcher {
+  position: absolute;
+  bottom: max(env(safe-area-inset-bottom, 0px), 6px);
+  right: 12px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 7px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 999px;
+  color: var(--color-warning);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.dev-pay-launcher:hover,
+.dev-pay-launcher:focus-visible {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: var(--color-warning);
+  outline: none;
+}
+
+.dev-pay-launcher:active {
+  transform: scale(0.96);
+}
+
+.dev-pay-launcher__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.18);
+  flex-shrink: 0;
+}
+
+.dev-pay-launcher__label {
+  display: inline-block;
+}
+
+/* ── Editorial frame chrome ────────────────────────────────── */
+
+.editorial-frame {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.editorial-frame--full-bleed {
+  padding: 0;
+}
+
+.editorial-frame__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 14px 24px 0;
+}
+
+.editorial-frame--full-bleed .editorial-frame__body {
+  padding: 0;
+}
+
+.editorial-frame__footer {
+  padding: 0 24px 18px;
+}
+
+/* Top reserved area for dotli topbar / iOS safe area. */
+.editorial-frame__top-space {
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.editorial-frame__bottom-space {
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Hairline header rail — wordmark + pilot eyebrow. */
+.rail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px 8px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.rail__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rail__wordmark {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.rail__eyebrow {
+  color: var(--color-text-muted);
+  font-size: 9px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+/* ── Editorial typography ──────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.eyebrow--warn { color: var(--color-warning); }
+.eyebrow--danger { color: #f87171; }
+.eyebrow--success { color: #4ade80; }
+
+.editorial-head {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.05;
+  color: var(--color-text-primary);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.editorial-head__suffix {
+  font-style: italic;
+  color: var(--color-text-tertiary);
+}
+
+.editorial-head__suffix--warn { color: var(--color-warning); }
+.editorial-head__suffix--danger { color: #f87171; }
+.editorial-head__suffix--success { color: #4ade80; }
+
+.editorial-sub {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 300;
+}
+
+.editorial-sub--small { font-size: 13px; }
+
+.serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-tertiary);
+}
+
+/* ── Dotted divider — paper-receipt feel ───────────────────── */
+
+.dotted {
+  height: 1px;
+  background-image: radial-gradient(circle, var(--color-border-strong) 0.7px, transparent 1px);
+  background-size: 6px 1px;
+  background-repeat: repeat-x;
+  margin: 14px 0;
+}
+
+.dotted--flush { margin: 0; }
+
+/* ── Roman-numeral step counter ────────────────────────────── */
+
+.editorial-step {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.editorial-step__numeral {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 28px;
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+}
+
+.editorial-step__numeral-of {
+  font-style: normal;
+  color: var(--color-text-faint);
+  font-size: 16px;
+}
+
+.editorial-step__label {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+/* ── Meta rows — label/value, mono on the right ────────────── */
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  gap: 12px;
+}
+
+.meta-row__label {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.meta-row__value {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  text-align: right;
+  word-break: break-all;
+  max-width: 62%;
+}
+
+.meta-row__value--mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Buttons ───────────────────────────────────────────────── */
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  padding: 15px 24px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  min-height: 54px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: -0.01em;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.btn--full { width: 100%; }
+
+.btn--primary {
+  background: var(--color-accent);
+  color: var(--color-accent-on);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.btn--primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.btn--secondary:hover {
+  border-color: var(--color-border-strong);
+}
+
+.btn:disabled {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-faint);
+  cursor: default;
+}
+
+/*
+ * Footer button row: secondary (Skip / Cancel) sits at a fixed compact
+ * width, primary takes the remainder. Locking the geometry means the
+ * primary's "Continue · X dotUSD" label can swap as the user taps tip
+ * presets without either button reflowing.
+ */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.btn-row > .btn--secondary {
+  flex: 0 0 104px;
+  width: auto;
+}
+
+.btn-row > .btn--primary {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  white-space: nowrap;
+  /*
+   * Tabular-nums keeps the amount glyphs the same advance width as the
+   * cents swap (e.g. "1.20 → 1.50" no longer nudges the column).
+   */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Round icon button (top-right history nav, history close). */
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+
+.icon-btn--glass {
+  background: rgba(28, 25, 23, 0.7);
+  backdrop-filter: blur(8px);
+  width: 36px;
+  height: 36px;
+}
+
+/* ── Confirm — amount cluster ──────────────────────────────── */
+
+.amount-cluster {
+  text-align: center;
+  padding: 10px 0 14px;
+}
+
+.amount-cluster__amount {
+  font-family: var(--font-serif);
+  font-size: 84px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-top: 6px;
+  color: var(--color-text-primary);
+}
+
+.amount-cluster__ticker {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  margin-left: 6px;
+}
+
+.amount-cluster__hint {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+/* ── Confirm — balance row ─────────────────────────────────── */
+
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+}
+
+.balance-row__label {
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.balance-row__label--warn { color: var(--color-warning); }
+
+.balance-row__value {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-row__value--warn { color: var(--color-warning); }
+
+.balance-row__value-secondary {
+  color: var(--color-text-faint);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Tip — head, subtotal, total ───────────────────────────── */
+
+.tip-head {
+  margin-top: 12px;
+}
+
+.tip-head__line {
+  font-size: 36px;
+}
+
+.tip-subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.tip-subtotal__label {
+  /* default tertiary from parent */
+}
+
+.tip-subtotal__value {
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-total {
+  text-align: center;
+  padding: 8px 0 14px;
+}
+
+.tip-total__amount {
+  font-family: var(--font-serif);
+  font-size: 76px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-top: 4px;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-total__ticker {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  margin-left: 8px;
+}
+
+.tip-total__line {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.tip-total__line--empty {
+  color: var(--color-text-faint);
+}
+
+.tip-total__line-pct {
+  font-family: var(--font-mono);
+  font-style: normal;
+  color: var(--color-text-faint);
+}
+
+/* ── Tip — preset chip grid ───────────────────────────────── */
+
+.tip-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.tip-preset--other {
+  grid-column: 1 / -1;
+}
+
+.tip-preset {
+  appearance: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 14px 6px 12px;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.tip-preset:hover:not(.tip-preset--active) {
+  border-color: var(--color-border-strong);
+}
+
+.tip-preset--active {
+  background: var(--color-accent);
+  color: var(--color-accent-on);
+  border-color: var(--color-accent);
+}
+
+.tip-preset__primary {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-preset__primary--other {
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.tip-preset__primary-suffix {
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  font-size: 18px;
+  margin-left: 1px;
+}
+
+.tip-preset--active .tip-preset__primary-suffix {
+  color: var(--color-accent-on);
+}
+
+.tip-preset__caption {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tip-preset--active .tip-preset__caption {
+  color: var(--color-accent-on);
+}
+
+/* ── Tip — custom amount input ────────────────────────────── */
+
+.tip-custom {
+  margin-top: 14px;
+  border-top: 1px solid var(--color-surface-secondary);
+  padding-top: 14px;
+}
+
+.tip-custom__input-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.tip-custom__symbol {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  color: var(--color-text-tertiary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.tip-custom__input {
+  background: transparent;
+  color: var(--color-text-primary);
+  /* Thin editorial baseline. Always visible so the field reads as an
+   * input even when empty; brightens on focus instead of the harsh
+   * global outline. */
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  outline: none;
+  caret-color: var(--color-text-secondary);
+  font-family: var(--font-serif);
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 6px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 120ms ease;
+  /* Hide native number-input spinners just in case the inputMode attribute
+   * is ignored on a given platform. */
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+.tip-custom__input::placeholder {
+  color: var(--color-text-faint);
+  opacity: 1;
+}
+
+/* Override the global :focus-visible outline — the input is `flex: 1` and
+ * spans the full row, so a 2px bright box draws attention to the wrong
+ * thing. The baseline rule below is the focus cue. */
+.tip-custom__input:focus,
+.tip-custom__input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--color-text-secondary);
+}
+
+.tip-custom__input::-webkit-outer-spin-button,
+.tip-custom__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.tip-custom__hint {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-faint);
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+/* ── DevPayScreen — manual-payment override (dev only) ─────── */
+
+.dev-pay__field {
+  margin-top: 22px;
+}
+
+.dev-pay__label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.dev-pay__input {
+  width: 100%;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  outline: none;
+  caret-color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 0 8px;
+  transition: border-color 120ms ease;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+  appearance: none;
+  border-radius: 0;
+}
+
+.dev-pay__input::placeholder {
+  color: var(--color-text-faint);
+  opacity: 1;
+}
+
+.dev-pay__input:focus,
+.dev-pay__input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--color-text-secondary);
+}
+
+.dev-pay__input--error,
+.dev-pay__input--error:focus,
+.dev-pay__input--error:focus-visible {
+  border-bottom-color: var(--color-danger);
+}
+
+.dev-pay__amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.dev-pay__amount-ticker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  letter-spacing: var(--tracking-wide);
+}
+
+.dev-pay__amount-input {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  letter-spacing: -0.02em;
+  flex: 1;
+  min-width: 0;
+}
+
+.dev-pay__hint {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-faint);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
+.dev-pay__hint--error {
+  color: var(--color-danger);
+  font-style: normal;
+  font-family: var(--font-sans);
+}
+/* ── Dev — copyable id rows ───────────────────────────────── */
+
+.dev-pay__copyrow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  background: rgba(28, 25, 23, 0.5);
+}
+
+.dev-pay__copyrow-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dev-pay__copyrow-label {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.dev-pay__copyrow-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.dev-pay__copyrow-action:hover,
+.dev-pay__copyrow-action:focus-visible {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.dev-pay__copyrow-action:active {
+  transform: scale(0.97);
+}
+
+.dev-pay__copyrow-hint {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--color-text-faint);
+  line-height: 1.3;
+}
+
+.dev-pay__copyrow-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-primary);
+  word-break: break-all;
+  line-height: 1.4;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+/* ── Confirm — tip breakdown line ─────────────────────────── */
+
+.amount-cluster__breakdown {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.amount-cluster__breakdown-pct {
+  font-family: var(--font-mono);
+  font-style: normal;
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Done — oversize amount ────────────────────────────────── */
+
+.done-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.done-stamp {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--color-success-soft);
+  border: 1.5px solid var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
+.done-amount {
+  font-family: var(--font-serif);
+  font-size: 112px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--color-text-primary);
+  margin: 8px 0 0;
+}
+
+.done-amount__ticker {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  margin-left: 8px;
+}
+
+.done-recipient {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  line-height: 1.2;
+  margin: 12px 0 0;
+}
+
+/* ── Scanning — full-bleed camera (bare viewport, no overlay) ────────────── */
+
+.scanning {
+  position: relative;
+  flex: 1;
+  display: flex;
+  background: radial-gradient(120% 80% at 50% 32%, #312822, #0c0a09 70%);
+  overflow: hidden;
+  min-height: 0;
+  /*
+   * Catch any pinch finger that drifts off the camera onto the scrim
+   * or surrounding chrome — without this, iOS picks the gesture back
+   * up as a page pan the moment a finger crosses the camera bounds.
+   */
+  touch-action: none;
+}
+
+.scanning__camera {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ * Camera viewport — square (1:1) container the active scanner backend
+ * mounts its <video> into. The wrap is just a relative positioning
+ * context for the start-window spinner; the `.qr-reader` div underneath
+ * is what carries the square aspect.
+ */
+.scanning__camera .scanner-wrap {
+  position: relative;
+  width: 80%;
+}
+
+/*
+ * The scanner mount target. Square viewport on a black background; the
+ * backend renders a 1:1 source crop into it so the visible camera area
+ * stays square instead of widescreen 16:9 or 4:3.
+ */
+.scanning__camera .qr-reader {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/*
+ * Scanner media. Both backends own a <video> and decode their own
+ * central source crop, so the video element can fill the square CSS box
+ * with `object-fit: cover`.
+ */
+.scanning__camera .qr-reader video,
+.scanning__camera .qr-reader canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+/*
+ * Suppress the centered ▶ play/pause overlay browsers paint on inline
+ * <video>s.
+ *
+ * iOS Safari/WKWebView shows `-webkit-media-controls-start-playback-button`
+ * (and the rest of the panel chrome) whenever it considers the element
+ * pausable. Android Chrome / WebView reuses the same `-webkit-media-
+ * controls-*` pseudo-element names (Blink forked from WebKit), plus
+ * `-overlay-enclosure` and `-enclosure` for the surrounding chrome.
+ *
+ * The scanner video is play-only — there's nothing for the user to
+ * control — so we suppress the entire media-controls shadow subtree.
+ * Three layers of defense because `display: none` alone doesn't always
+ * propagate through the user-agent shadow root reliably:
+ *
+ *   1. Hide the controls pseudo-elements (`display: none`).
+ *   2. If a leftover layer still renders (Chromium sometimes ignores
+ *      `display: none` on overlay enclosures), make it invisible AND
+ *      collapse it to zero size.
+ *   3. Make the <video> element itself non-interactive — even if a
+ *      stray overlay shows, the user can't accidentally tap it and
+ *      pause the stream.
+ */
+.scanning__camera .qr-reader video {
+  pointer-events: none;
+}
+.scanning__camera .qr-reader video::-webkit-media-controls,
+.scanning__camera .qr-reader video::-webkit-media-controls-enclosure,
+.scanning__camera .qr-reader video::-webkit-media-controls-overlay-enclosure,
+.scanning__camera .qr-reader video::-webkit-media-controls-panel,
+.scanning__camera .qr-reader video::-webkit-media-controls-play-button,
+.scanning__camera .qr-reader video::-webkit-media-controls-overlay-play-button,
+.scanning__camera .qr-reader video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+.scanning__top {
+  position: absolute;
+  top: 60px;
+  left: 24px;
+  right: 24px;
+  z-index: 2;
+  color: var(--color-text-primary);
+}
+
+.scanning__title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  margin-top: 10px;
+  letter-spacing: var(--tracking-tight);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.7);
+}
+
+.scanning__title-suffix {
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+
+.scanning__bottom {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 56px;
+  z-index: 2;
+}
+
+.scanning__balance-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(28, 25, 23, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border);
+}
+
+.scanning__balance-chip-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.scanning__balance-chip-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+.scanning__balance-chip-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: #4ade80;
+  animation: w3-pulse 2s infinite;
+}
+
+.scanning__footer-hint {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-faint);
+  font-size: 13px;
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.3;
+}
+
+.scanning__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 12, 9, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  z-index: 3;
+}
+
+.scanning__overlay-label {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+}
+
+.scanning__decode-target {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 4;
+}
+
+/* ── Sign-in topbar arrow cue ──────────────────────────────── */
+
+.signin-arrow {
+  position: absolute;
+  top: 56px;
+  right: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+}
+
+.signin-arrow__label {
+  color: var(--color-text-muted);
+  font-size: 9px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+/* "Waiting for the host" inline card on sign-in. */
+.waiting-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  margin-bottom: 14px;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+/* ── Spinner ───────────────────────────────────────────────── */
+
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+}
+
+.spinner__ring {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: w3-spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+.spinner__label {
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+/* ── Boot screen ───────────────────────────────────────────── */
+
+.boot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 80px 24px 0;
+}
+
+.boot__wordmark {
+  font-family: var(--font-serif);
+  font-size: 44px;
+  letter-spacing: var(--tracking-tighter);
+  text-align: center;
+}
+
+.boot__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  font-size: 18px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.boot__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+
+/* ── Wallet tabs ───────────────────────────────────────────── */
+
+/*
+ * Two-up tab row that lives at the top of the wallet overlay above the
+ * panel headings. Inactive tabs are muted; the active tab carries the
+ * full text colour and a hairline underline so the choice reads from
+ * the same glance distance as the body type.
+ */
+.wallet-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-top: 4px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.wallet-tabs__tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 12px 0 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.wallet-tabs__tab:hover,
+.wallet-tabs__tab:focus-visible {
+  color: var(--color-text-secondary);
+  outline: none;
+}
+
+.wallet-tabs__tab--active,
+.wallet-tabs__tab--active:hover,
+.wallet-tabs__tab--active:focus-visible {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-text-primary);
+}
+
+/* ── Wallet panels (tab content area) ─────────────────────── */
+
+.wallet-panels {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/*
+ * Each panel is stacked absolutely inside the shared container so that
+ * switching tabs never causes a layout shift — only an opacity crossfade.
+ * The inactive panel defers its `visibility: hidden` until after the
+ * fade completes, removing it from the tab order and accessibility tree
+ * only once it is fully invisible.
+ */
+.wallet-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+  overflow: hidden;
+}
+
+.wallet-panel--active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 180ms ease, visibility 0s linear 0s;
+}
+
+/* ── History screen ────────────────────────────────────────── */
+
+.history__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.history__total {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.history__balance-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0 6px;
+}
+
+.history__balance-amount {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  letter-spacing: var(--tracking-tighter);
+}
+
+.history__list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.history__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  gap: 12px;
+}
+
+/* Make each row tappable as a button without losing the typographic layout. */
+.history__row {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.history__row:hover,
+.history__row:focus-visible {
+  background: var(--color-surface);
+  outline: none;
+}
+
+/* Receipt detail screen — amount cluster + QR card. */
+.receipt-amount {
+  padding: 8px 0 12px;
+  text-align: center;
+}
+.receipt-amount__value {
+  font-family: var(--font-mono);
+  font-size: 36px;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.receipt-amount__ticker {
+  font-size: 16px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
+}
+.receipt-amount__breakdown {
+  margin-top: 6px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.receipt-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0;
+}
+.receipt-qr__svg {
+  width: 200px;
+  height: 200px;
+  background: #fafaf9;
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.receipt-qr__svg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.receipt-qr__caption {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.history__merchant {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.history__meta {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  letter-spacing: var(--tracking-wide);
+  margin-top: 2px;
+}
+
+.history__amount {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.history__amount--refund { color: #f87171; }
+
+.history__status {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-faint);
+  font-size: 9px;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.history__status--refund {
+  font-family: var(--font-sans);
+  font-style: normal;
+  color: #f87171;
+}
+
+.history__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  padding: 24px;
+  text-align: center;
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+
+@keyframes w3-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes w3-pulse {
+  50% { opacity: 0.4; }
+}
+
+@keyframes w3-screen-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes w3-screen-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/*
+ * Per-screen wrapper rendered by `<ScreenTransition>`. The enter slot
+ * participates in the workspace's flex column the same way the bare
+ * `<editorial-frame>` did before — it fills the workspace and its
+ * inner editorial-frame uses `flex: 1` against this wrapper. The
+ * leave slot is absolutely positioned over the workspace for the
+ * 280 ms exit animation, so the entering screen takes its place in
+ * normal flow without being pushed down.
+ */
+.screen-transition {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen-transition--enter {
+  will-change: opacity, transform;
+  animation: w3-screen-in 280ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.screen-transition--leave {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: opacity, transform;
+  animation: w3-screen-out 240ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.screen-fade {
+  animation: w3-screen-in 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/*
+ * Tap-to-focus indicator on the live camera. Sized in CSS pixels and
+ * pinned to the tap point in the parent's coordinate space (the
+ * `<Scanner>` element is `.scanner-wrap`, which the React component
+ * positions relatively). The ring shrinks toward the tap on entry
+ * (mirrors Apple Camera's affordance), then fades out — the animation
+ * end event clears the indicator from state.
+ */
+.focus-ring {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  border: 1.5px solid #facc15;
+  pointer-events: none;
+  animation: w3-focus-ring 720ms ease-out forwards;
+  z-index: 4;
+}
+
+@keyframes w3-focus-ring {
+  0%   { transform: scale(1.4); opacity: 0; }
+  20%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1);   opacity: 0; }
+}
+
+/*
+ * Camera torch (flash LED) toggle. Sits at the top-right of the
+ * `.scanner-wrap`, only rendered when the underlying MediaStreamTrack
+ * advertises the `torch` capability. The "on" state flips to the
+ * editorial yellow so it reads at a glance, the same hue as Apple
+ * Camera's active flash.
+ */
+.torch-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(250, 250, 249, 0.18);
+  background: rgba(15, 12, 9, 0.55);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background .15s, color .15s, border-color .15s, transform .12s;
+  /* The pinch / tap hooks are bound to the `<video>`; the button must
+   * stop touch sequences from reaching them so a torch tap doesn't
+   * also fire a focus tap on the video underneath. */
+  touch-action: manipulation;
+}
+
+.torch-button:active {
+  transform: scale(0.94);
+}
+
+.torch-button--on {
+  background: #facc15;
+  color: #1c1917;
+  border-color: #facc15;
+}
+
+::selection {
+  background: rgba(250, 250, 249, 0.12);
+  color: var(--color-text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-text-secondary);
+  outline-offset: 2px;
+}
