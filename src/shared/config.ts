@@ -118,7 +118,7 @@ export interface EnvConfig {
     /**
      * Active network key. Drives `host/client.ts` chain selection — the
      * PAPI client for the configured main chain is created on first use
-     * by `useMainClient()` and cached for the process lifetime.
+     * by `useAssetHubClient()` and cached for the process lifetime.
      */
     readonly network: NetworkKey;
     /**

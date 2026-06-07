@@ -8,7 +8,7 @@
  * `./host-connection.ts` so tests can mock the local module to flip
  * provider strategy without reaching into the shared package.
  *
- * `useMainClient` / `usePeopleClient` return `{ client, unsafeApi }`.
+ * `useAssetHubClient` / `usePeopleClient` return `{ client, unsafeApi }`.
  * Despite the `use` prefix these are NOT React hooks — they're
  * process-wide singleton getters named for symmetry with the
  * conference-app and w3spay-admin codebases.
@@ -32,7 +32,6 @@
 
 import {
   getOrCreateClient,
-  isInHost,
   resetClientCache,
   resolveNetwork,
 } from "@/shared/api/host";
@@ -43,10 +42,10 @@ import { envConfig } from "@/shared/config.ts";
  * Get (or create) the shared main-chain PAPI client. Idempotent;
  * underlying client is cached by genesis hash.
  */
-export function useMainClient() {
+export function useAssetHubClient() {
   const network = resolveNetwork(envConfig.chain.network);
   const genesis = network.mainChain.genesisHash as `0x${string}`;
-  const client = getOrCreateClient(genesis, network.mainChain.wsUrl, isInHost, "auto");
+  const client = getOrCreateClient(genesis, network.mainChain.wsUrl);
   return {
     client,
     unsafeApi: client.getUnsafeApi(),
@@ -65,9 +64,7 @@ export function usePeopleClient() {
   if (!people || people.genesisHash === "") return null;
   const client = getOrCreateClient(
     people.genesisHash as `0x${string}`,
-    people.wsUrl,
-    isInHost,
-    "ws",
+    people.wsUrl
   );
   return {
     client,

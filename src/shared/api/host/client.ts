@@ -5,16 +5,19 @@
  * Provider strategy:
  *
  *   - **In host** (Polkadot Desktop webview, dotli iframe, native mobile):
- *     `createPapiProvider(genesis)` from `@novasamatech/host-api-wrapper`. The
- *     SDK probes the host with `host_feature_supported(Chain, genesis)`.
- *     When the host advertises the chain, all JSON-RPC flows through the
- *     host bridge — required on mobile, where the sandboxed iframe cannot
- *     open arbitrary WSS sockets. When the host does NOT advertise the
- *     chain, the SDK falls through to the WS provider instead of returning
- *     a dead provider that silently hangs every send.
+ *     `createPapiProvider(genesis, wsFallbackProvider)` from
+ *     `@novasamatech/host-api-wrapper`. The SDK probes the host with
+ *     `host_feature_supported(Chain, genesis)`. When the host advertises the
+ *     chain, all JSON-RPC flows through the host bridge — required on mobile,
+ *     where the sandboxed iframe cannot open arbitrary WSS sockets. When the
+ *     host does NOT advertise the chain, the SDK falls through to the WS
+ *     provider passed as the 2nd argument instead of returning a dead provider
+ *     that silently hangs every send.
  *
  *   - **Standalone** (regular browser tab):
- *     Direct WSS to `wsFallback`.
+ *     Direct WSS to `wsFallback`. `createPapiProvider` throws outside a host
+ *     product environment (`isCorrectEnvironment()` is false), so it is never
+ *     called here — the `!inHost()` guard picks the WS provider directly.
  *
  * Why a host-detection predicate is passed in:
  *
@@ -42,9 +45,11 @@ const clientCache = new Map<`0x${string}`, PolkadotClient>();
  * calls with the same genesis return the cached client.
  *
  * Transport:
- *   - `"auto"` (default): host mode routes through `createPapiProvider`
- *     (required on mobile, where the sandboxed iframe can't open arbitrary
- *     WSS sockets); standalone mode opens a direct WS to `wsFallback`.
+ *   - `"auto"` (default): host mode routes through `createPapiProvider` with
+ *     the WS provider passed as its fallback, so a chain the host does not
+ *     advertise degrades to direct WS instead of a dead provider; standalone
+ *     mode opens a direct WS to `wsFallback` (createPapiProvider throws outside
+ *     a host product environment, so it cannot be called there).
  *   - `"ws"`: ALWAYS open a direct WS to `wsFallback`, even in host. Use this
  *     for chains where the host's `createPapiProvider` advertises support but
  *     does not establish a working chainHead follow — on Paseo Asset Hub Next
@@ -58,13 +63,11 @@ const clientCache = new Map<`0x${string}`, PolkadotClient>();
 export function getOrCreateClient(
   genesis: `0x${string}`,
   wsFallback: string,
-  inHost: () => boolean,
-  transport: "auto" | "ws" = "auto",
 ): PolkadotClient {
   let client = clientCache.get(genesis);
   if (!client) {
-    const provider =
-      transport === "ws" || !inHost() ? getWsProvider(wsFallback) : createPapiProvider(genesis);
+    const ws = getWsProvider(wsFallback);
+    const provider = createPapiProvider(genesis, ws);
     client = createClient(provider);
     clientCache.set(genesis, client);
   }

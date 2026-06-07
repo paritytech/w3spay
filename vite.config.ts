@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 /// <reference types="vitest" />
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +10,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: "./",
-  plugins: [react()],
+  plugins: [react(), sentryVitePlugin({
+    org: "paritytech",
+    project: "w3spay"
+  })],
   resolve: {
     // Absolute `@/` imports → `src/`. Used app-wide so feature moves don't
     // cascade into hundreds of relative-path updates. SDK aliases must come
@@ -22,6 +26,7 @@ export default defineConfig({
   // consumer; no wasm plugin or top-level-await is needed here.
   build: {
     target: "es2022",
+    sourcemap: true
   },
   esbuild: {
     target: "es2022",

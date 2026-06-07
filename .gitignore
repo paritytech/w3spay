@@ -40,3 +40,6 @@ out.bulletin.car
 
 # Vendored product-sdk tarballs ARE committed on purpose — they pin the
 # host SDK surface w3spay was built against. Do not add tools/ here.
+
+# Sentry Config File
+.env.sentry-build-plugin

@@ -512,9 +512,9 @@ describe("loadMerchants — chain integration", () => {
     expect(result.source).toBe("empty");
   });
 
-  it("forwards a caller-supplied dry-run origin (host wallet) to the revive call", async () => {
-    // When the host wallet is ready, `useMerchantTable` passes the
-    // product-account SS58 here; every dry-run must run under it.
+  it("forwards a caller-supplied mapped dry-run origin to the revive call", async () => {
+    // Generic callers may override the sentinel, but the supplied origin must
+    // already be mapped in pallet-revive.
     const walletOrigin = "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw";
     const client = makeFakeClient({
       version: 1n,

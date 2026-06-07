@@ -41,7 +41,7 @@ vi.mock("@/shared/config.ts", () => ({
 
 import {
   resetMainClient,
-  useMainClient,
+  useAssetHubClient,
   usePeopleClient,
 } from "@/features/host/lib/client.ts";
 
@@ -55,7 +55,7 @@ describe("w3spay chain client transport", () => {
   it("uses auto transport in host mode for merchant registry reads", () => {
     mocks.isInHost.mockReturnValue(true);
 
-    const main = useMainClient();
+    const main = useAssetHubClient();
 
     expect(mocks.getOrCreateClient).toHaveBeenCalledWith(
       mocks.TEST_GENESIS,
@@ -70,7 +70,7 @@ describe("w3spay chain client transport", () => {
   it("uses auto transport in standalone mode too", () => {
     mocks.isInHost.mockReturnValue(false);
 
-    const main = useMainClient();
+    const main = useAssetHubClient();
 
     expect(mocks.getOrCreateClient).toHaveBeenCalledWith(
       mocks.TEST_GENESIS,

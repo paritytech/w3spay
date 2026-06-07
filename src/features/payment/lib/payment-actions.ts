@@ -33,7 +33,7 @@ import type { PaymentHost } from "@/features/host/lib/payment-host.ts";
 import { getTerminalStore } from "@/features/host/lib/terminal-store.ts";
 import {
   merchantTableQueryOptions,
-  preferredDryRunOrigin,
+  merchantDryRunOrigin,
   useMerchantTable,
 } from "@/features/merchants/api/queries.ts";
 import {
@@ -47,7 +47,6 @@ import type { MerchantEntry, MerchantTable } from "@/features/merchants/types.ts
 import type { ParsedTseQr } from "@/features/scan/lib/tse-parser.ts";
 import type { ParsedTerminalPayQr } from "@/features/scan/lib/terminal-pay-parser.ts";
 import { messageFromError } from "@/shared/utils/error-message.ts";
-import { useHostWalletSnapshot } from "@/shared/api/host";
 
 import {
   derivePayErrorStage,
@@ -101,7 +100,6 @@ export function usePaymentActions(): PaymentActions {
   const queryClient = useQueryClient();
 
   const { state: authState } = useHostAuth();
-  const wallet = useHostWalletSnapshot();
   const { source: merchantTableSource } = useMerchantTable();
 
   const sendPaymentMutation = useSendPayment();
@@ -202,7 +200,7 @@ export function usePaymentActions(): PaymentActions {
     journeyTracker.complete("qr-scan", { "scan.outcome": "terminal-pay" });
     setResolving(true);
     void (async () => {
-      const origin = preferredDryRunOrigin(wallet, envConfig.chain.readOnlyOrigin);
+      const origin = merchantDryRunOrigin(envConfig.chain.readOnlyOrigin);
       let table: MerchantTable;
       try {
         ({ table } = await queryClient.ensureQueryData(merchantTableQueryOptions(origin)));
@@ -240,7 +238,7 @@ export function usePaymentActions(): PaymentActions {
 
       // Await the merchant table via the shared query cache — resolves
       // instantly when already loaded, otherwise waits for the boot fetch.
-      const origin = preferredDryRunOrigin(wallet, envConfig.chain.readOnlyOrigin);
+      const origin = merchantDryRunOrigin(envConfig.chain.readOnlyOrigin);
       let table;
       try {
         ({ table } = await queryClient.ensureQueryData(

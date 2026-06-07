@@ -80,9 +80,9 @@ export interface LoadMerchantsOptions {
   client?: PolkadotClient | null;
   /**
    * SS58 dry-run origin for the revive read. Defaults to the mapped
-   * read-only sentinel (`envConfig.chain.readOnlyOrigin`). Callers pass
-   * the host product-account address when the host wallet is ready so
-   * registry reads run under the same identity as admin's writes.
+   * read-only sentinel (`envConfig.chain.readOnlyOrigin`). Runtime merchant
+   * reads should keep that sentinel; custom callers must pass an origin that
+   * is already mapped in pallet-revive.
    */
   origin?: string;
   /** Persistent cache. When provided, chain reads refresh it. */

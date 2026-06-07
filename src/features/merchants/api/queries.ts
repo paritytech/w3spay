@@ -12,23 +12,21 @@
  * to satisfy the chain's registry version, the query resolves immediately on
  * first run from cache — no retry needed.
  *
- * Dry-run origin: registry reads run under the host product-account SS58
- * once the host wallet is ready; before that they fall back to the mapped
- * read-only sentinel. The wallet transitioning to ready re-keys the query
- * and re-reads under the product-account origin; `keepPreviousData` holds
- * the loaded table steady across the re-key.
+ * Dry-run origin: registry reads always run under the configured mapped
+ * read-only sentinel. Host product accounts are not guaranteed to be mapped
+ * in pallet-revive; using them for view calls can fail with
+ * `Revive.AccountUnmapped`.
  */
 
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
 
-import { useHostWalletSnapshot } from "@/shared/api/host";
 
 import type { MerchantTable } from "@/features/merchants/types.ts";
 import {
   loadMerchants,
   type LoadMerchantsSource,
 } from "@/features/merchants/lib/load-merchants.ts";
-import { useMainClient } from "@/features/host/lib/client.ts";
+import { useAssetHubClient } from "@/features/host/lib/client.ts";
 import { getTerminalStore } from "@/features/host/lib/terminal-store.ts";
 import { merchantKeys } from "@/features/merchants/api/keys.ts";
 import { envConfig } from "@/shared/config.ts";
@@ -41,15 +39,12 @@ export interface MerchantTableState {
 }
 
 /**
- * Pure resolver for the registry dry-run origin. Prefer the ready host
- * product-account address; otherwise the mapped read-only sentinel.
- * Extracted so the preference rule is unit-testable without React.
+ * Registry dry-run origin. Keep this as the known mapped read-only sentinel.
+ * `getVersion()` and row enumeration are public reads, so switching to the
+ * host product account only adds a pallet-revive mapping requirement.
  */
-export function preferredDryRunOrigin(
-  wallet: { readonly isReady: boolean; readonly address: string | null },
-  fallback: string,
-): string {
-  return wallet.isReady && wallet.address ? wallet.address : fallback;
+export function merchantDryRunOrigin(readOnlyOrigin: string): string {
+  return readOnlyOrigin;
 }
 
 interface LoadedMerchants {
@@ -70,9 +65,10 @@ export function merchantTableQueryOptions(origin: string) {
   return queryOptions({
     queryKey: merchantKeys.table(origin),
     queryFn: async (): Promise<LoadedMerchants> => {
-      // `useMainClient` is a cached singleton getter, not a React hook
+      // `useAssetHubClient` is a cached singleton getter, not a React hook
       // (see `host/client.ts`); safe to call here.
-      const client = registryAddress.length > 0 ? useMainClient().client : null;
+      const client = useAssetHubClient().client;
+      console.log("[w3spay/merchants] loading merchant table", { origin, registryAddress });
       try {
         const result = await loadMerchants({
           registryAddress,
@@ -92,7 +88,7 @@ export function merchantTableQueryOptions(origin: string) {
         // When the registry is configured and the chain + cache both came back
         // empty, throw so TanStack retries. Dev/standalone (no registry address
         // or no client) returns empty as a terminal success — no retry.
-        if (result.source === "empty" && registryAddress.length > 0 && client !== null) {
+        if (result.source === "empty" && registryAddress.length > 0) {
           throw new Error("[w3spay/merchants] registry unreachable; will retry");
         }
         return { table: result.table, source: result.source };
@@ -113,8 +109,7 @@ export function merchantTableQueryOptions(origin: string) {
 }
 
 export function useMerchantTable(): MerchantTableState {
-  const wallet = useHostWalletSnapshot();
-  const origin = preferredDryRunOrigin(wallet, envConfig.chain.readOnlyOrigin);
+  const origin = merchantDryRunOrigin(envConfig.chain.readOnlyOrigin);
 
   const query = useQuery({
     ...merchantTableQueryOptions(origin),

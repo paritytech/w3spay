@@ -10,9 +10,9 @@
  *
  * Reads go through `@/sdk/contracts`' `readContract` (the same
  * helper w3spay-admin uses), so w3spay and admin share one revive
- * dry-run path. The dry-run `origin` is supplied by the caller: when the
- * host wallet is ready it is the product-account SS58 address; otherwise
- * a well-known mapped sentinel (see `load-merchants.ts`).
+ * dry-run path. The dry-run `origin` is supplied by the caller and must be an
+ * account already mapped in pallet-revive; w3spay runtime reads use the
+ * configured mapped sentinel (see `load-merchants.ts`).
  *
  * Version short-circuit: when `previousVersion` is supplied and the
  * on-chain `getVersion()` matches, this module rejects with
@@ -73,8 +73,8 @@ export interface LoadOnChainOptions {
   /** Paseo Asset Hub PAPI client (or a structurally-compatible mock). */
   client: PolkadotClient;
   /**
-   * SS58 dry-run origin. The host product-account address when the host
-   * wallet is ready; otherwise the mapped read-only sentinel.
+   * SS58 dry-run origin. Must be mapped in pallet-revive; unmapped accounts
+   * fail `ReviveApi.call` with `Revive.AccountUnmapped` even for view reads.
    */
   origin: string;
   /**
