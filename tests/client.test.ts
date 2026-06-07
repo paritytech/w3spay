@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("@/sdk", () => ({
+vi.mock("@/shared/api/host", () => ({
   getOrCreateClient: mocks.getOrCreateClient,
   isInHost: mocks.isInHost,
   resetClientCache: mocks.resetClientCache,

@@ -11,7 +11,7 @@
  * `@polkadot-api/substrate-bindings` as new dependencies.
  */
 
-import { ethers } from "ethers";
+import { isHexString } from "ethers";
 
 /** Branded type for a 0x-prefixed 20-byte H160. */
 export type H160Hex = `0x${string}`;
@@ -27,7 +27,7 @@ export class InvalidAdminAddressError extends Error {
 }
 
 export function isH160Address(value: string): boolean {
-  return ethers.isHexString(value, 20);
+  return isHexString(value, 20);
 }
 
 export function normalizeH160Address(value: string): H160Hex {

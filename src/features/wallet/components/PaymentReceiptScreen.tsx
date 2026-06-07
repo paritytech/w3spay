@@ -7,14 +7,13 @@
  * back into a scannable SVG so the user can show the slip on screen.
  */
 
-import { useEffect, useState } from "react";
 
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
 import {
   formatHistoryDate,
   type PaymentRecord,
 } from "@/features/wallet/api/payment-history.ts";
-import { renderQrSvg } from "@/shared/utils/qr-render.ts";
+import { useQrSvg } from "@/features/wallet/api/qr-svg.ts";
 import {
   Dotted,
   Eyebrow,
@@ -31,27 +30,7 @@ export interface PaymentReceiptScreenProps {
 }
 
 export function PaymentReceiptScreen({ record, onBack }: PaymentReceiptScreenProps) {
-  const [qrSvg, setQrSvg] = useState<string | null>(null);
-
-  useEffect(() => {
-    const text = record.rawQrText;
-    if (!text) {
-      setQrSvg(null);
-      return;
-    }
-    let cancelled = false;
-    void renderQrSvg(text)
-      .then((svg) => {
-        if (!cancelled) setQrSvg(svg);
-      })
-      .catch((err) => {
-        console.warn("[w3spay/receipt] QR render failed", err);
-        if (!cancelled) setQrSvg(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [record.rawQrText]);
+  const qrSvg = useQrSvg(record.rawQrText);
 
   // Fall back to the shortened destination when no merchant entry was
   // attached at write time (dev-pay records).

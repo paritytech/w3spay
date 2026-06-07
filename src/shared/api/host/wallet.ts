@@ -21,7 +21,7 @@
  * opens the host's login modal for apps that gate on an explicit grant.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import type { ProductAccount as HostProductAccount } from "@novasamatech/host-api-wrapper";
 import type { PolkadotSigner } from "polkadot-api";
 import { AccountId } from "@polkadot-api/substrate-bindings";
@@ -92,11 +92,11 @@ const INITIAL_STATE: HostWalletState = {
 let state: HostWalletState = INITIAL_STATE;
 let inFlight: Promise<void> | null = null;
 let activeOptions: ResolvedHostWalletOptions | null = null;
-const listeners = new Set<(next: HostWalletState) => void>();
+const listeners = new Set<() => void>();
 
 function setState(next: HostWalletState): void {
   state = next;
-  for (const listener of listeners) listener(next);
+  for (const listener of listeners) listener();
 }
 
 // ── Init ─────────────────────────────────────────────────────────
@@ -222,18 +222,26 @@ export function useHostWallet(opts: UseHostWalletOptions): HostWalletSnapshot {
   return useHostWalletSnapshot();
 }
 
+function subscribeWallet(callback: () => void): () => void {
+  listeners.add(callback);
+  return () => {
+    listeners.delete(callback);
+  };
+}
+
+function getWalletSnapshot(): HostWalletState {
+  return state;
+}
+
 /** Subscribe to the current wallet state without starting init. Useful for
  *  generic SDK UI (debug panel, permission gates) and leaf app code that must
  *  observe the root wallet init without owning product identity. */
 export function useHostWalletSnapshot(): HostWalletSnapshot {
-  const [current, setCurrent] = useState(state);
-  useEffect(() => {
-    setCurrent(state);
-    listeners.add(setCurrent);
-    return () => {
-      listeners.delete(setCurrent);
-    };
-  }, []);
+  const current = useSyncExternalStore(
+    subscribeWallet,
+    getWalletSnapshot,
+    getWalletSnapshot,
+  );
 
   const ready = current.kind === "ready";
   return {
@@ -347,7 +355,7 @@ export function __resetHostWalletForTests(): void {
   state = INITIAL_STATE;
   activeOptions = null;
   inFlight = null;
-  for (const listener of listeners) listener(state);
+  for (const listener of listeners) listener();
 }
 
 export function __getHostWalletStateForTests(): HostWalletState {

@@ -40,6 +40,9 @@ import { createClient, type PolkadotClient } from "polkadot-api";
 
 const clientCache = new Map<`0x${string}`, PolkadotClient>();
 
+export type HostEnvironmentPredicate = () => boolean;
+export type ClientTransportMode = "auto" | "ws";
+
 /**
  * Get or create a PAPI client for a given chain genesis hash. Subsequent
  * calls with the same genesis return the cached client.
@@ -63,11 +66,13 @@ const clientCache = new Map<`0x${string}`, PolkadotClient>();
 export function getOrCreateClient(
   genesis: `0x${string}`,
   wsFallback: string,
+  inHost: HostEnvironmentPredicate,
+  transport: ClientTransportMode = "auto",
 ): PolkadotClient {
   let client = clientCache.get(genesis);
   if (!client) {
     const ws = getWsProvider(wsFallback);
-    const provider = createPapiProvider(genesis, ws);
+    const provider = transport === "auto" && inHost() ? createPapiProvider(genesis, ws) : ws;
     client = createClient(provider);
     clientCache.set(genesis, client);
   }

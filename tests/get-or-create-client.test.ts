@@ -47,7 +47,7 @@ afterEach(() => {
 
 describe("getOrCreateClient transport selection", () => {
   it("auto + in host: routes through createPapiProvider with the WS provider as fallback", () => {
-    getOrCreateClient(GENESIS, WS);
+    getOrCreateClient(GENESIS, WS, () => true, "auto");
 
     expect(mocks.getWsProvider).toHaveBeenCalledWith(WS);
     expect(mocks.createPapiProvider).toHaveBeenCalledWith(GENESIS, mocks.wsProvider);
@@ -55,22 +55,22 @@ describe("getOrCreateClient transport selection", () => {
   });
 
   it("standalone (!inHost): uses the WS provider directly, never createPapiProvider", () => {
-    getOrCreateClient(GENESIS, WS);
+    getOrCreateClient(GENESIS, WS, () => false, "auto");
 
     expect(mocks.createPapiProvider).not.toHaveBeenCalled();
     expect(mocks.createClient).toHaveBeenCalledWith(mocks.wsProvider);
   });
 
   it('forced "ws": uses the WS provider directly even in host', () => {
-    getOrCreateClient(GENESIS, WS);
+    getOrCreateClient(GENESIS, WS, () => true, "ws");
 
     expect(mocks.createPapiProvider).not.toHaveBeenCalled();
     expect(mocks.createClient).toHaveBeenCalledWith(mocks.wsProvider);
   });
 
   it("caches one client per genesis hash", () => {
-    const a = getOrCreateClient(GENESIS, WS);
-    const b = getOrCreateClient(GENESIS, WS);
+    const a = getOrCreateClient(GENESIS, WS, () => false, "auto");
+    const b = getOrCreateClient(GENESIS, WS, () => false, "auto");
 
     expect(a).toBe(b);
     expect(mocks.createClient).toHaveBeenCalledTimes(1);

@@ -12,7 +12,7 @@
  * handler still sees it).
  */
 
-import { ethers } from "ethers";
+import { Interface, type InterfaceAbi } from "ethers";
 import { Binary, type PolkadotClient, type PolkadotSigner } from "polkadot-api";
 
 import { isAccountMapped } from "./account-mapping.ts";
@@ -59,7 +59,7 @@ function formatParsedErrorArg(value: unknown): string {
 }
 
 function decodeDryRunRevertReason(
-  iface: ethers.Interface,
+  iface: Interface,
   data: `0x${string}`,
 ): string | null {
   if (data === "0x") return null;
@@ -81,7 +81,7 @@ function decodeDryRunRevertReason(
 }
 
 function dryRunRevertMessage(
-  iface: ethers.Interface,
+  iface: Interface,
   functionName: string,
   data: Uint8Array,
 ): string {
@@ -132,7 +132,7 @@ const FALLBACK_STORAGE_DEPOSIT = 50_000_000_000n;
 
 export interface WriteContractOptions {
   readonly address: `0x${string}`;
-  readonly abi: ethers.InterfaceAbi;
+  readonly abi: InterfaceAbi;
   readonly functionName: string;
   readonly args?: readonly unknown[];
   readonly value?: bigint;
@@ -179,7 +179,7 @@ export async function writeContract(
 
   onStatus?.("preparing");
 
-  const iface = new ethers.Interface(abi);
+  const iface = new Interface(abi);
   const calldata = iface.encodeFunctionData(functionName, args) as `0x${string}`;
   const unsafeApi = client.getUnsafeApi();
   const destLower = address.toLowerCase() as `0x${string}`;

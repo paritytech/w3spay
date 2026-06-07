@@ -12,12 +12,12 @@
  * download. See `util/save-receipt-image.ts` for the canvas renderer.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
 import { formatHistoryDate } from "@/features/wallet/api/payment-history.ts";
 import { itemLineTotalCents, type ReceiptRecord } from "@/features/wallet/api/receipts.ts";
-import { renderQrSvg } from "@/shared/utils/qr-render.ts";
+import { useQrSvg } from "@/features/wallet/api/qr-svg.ts";
 import { saveReceiptImage } from "@/shared/utils/save-receipt-image.ts";
 import { Dotted, Eyebrow, Frame, Head, Icon, IconButton, MetaRow, SecondaryButton } from "@/shared/components/primitives.tsx";
 import { shortHex, splitDisplayName } from "@/shared/utils/format.ts";
@@ -28,30 +28,11 @@ export interface ReceiptDetailScreenProps {
 }
 
 export function ReceiptDetailScreen({ record, onBack }: ReceiptDetailScreenProps) {
-  const [qrSvg, setQrSvg] = useState<string | null>(null);
+  const qrSvg = useQrSvg(record.rawQrText);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const { receipt } = record;
 
-  useEffect(() => {
-    const text = record.rawQrText;
-    if (!text) {
-      setQrSvg(null);
-      return;
-    }
-    let cancelled = false;
-    void renderQrSvg(text)
-      .then((svg) => {
-        if (!cancelled) setQrSvg(svg);
-      })
-      .catch((err) => {
-        console.warn("[w3spay/receipt] QR render failed", err);
-        if (!cancelled) setQrSvg(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [record.rawQrText]);
 
   const { business } = receipt;
   const { name, venue } = splitDisplayName(business.name);
