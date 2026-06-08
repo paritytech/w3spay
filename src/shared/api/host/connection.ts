@@ -352,18 +352,56 @@ export function runExclusiveHostModal<T>(task: () => PromiseLike<T>): Promise<T>
  *   - `err(...)`  — transport/encoding error → thrown so the caller's
  *     `try/catch` can decide whether to fall through to getUserMedia
  *     or surface a hard failure.
+ *
+ * **Session cache.** A successful grant is cached for the page
+ * lifetime so scanner remounts, ScanPage re-entries, and the
+ * `useCameraPermission` probe never re-issue the host modal — the
+ * grant is stable across one session and the host SDK does not
+ * guarantee idempotency across every platform (the bug this caching
+ * fixes: a single receipt-save journey could fire 3 host modals).
+ * Denials and transport errors are NOT cached — `retry()` from the
+ * CameraDeniedScreen calls `resetCameraPermissionCache()` so the user
+ * can re-ask after fixing their grant in host settings.
  */
+let cameraGrantCache: true | null = null;
+let inFlightCameraGrant: Promise<boolean> | null = null;
+
 export async function requestCameraPermission(): Promise<boolean> {
   if (!isInHost()) return true;
-  const result = await runExclusiveHostModal(() => requestDevicePermission("Camera"));
-  return result.match(
-    (granted) => granted,
-    (err) => {
-      const reason =
-        "reason" in err && typeof err.reason === "string" ? err.reason : "unknown";
-      throw new Error(`[host] requestCameraPermission failed: ${reason}`);
-    },
-  );
+  if (cameraGrantCache === true) return true;
+  if (inFlightCameraGrant !== null) return inFlightCameraGrant;
+  const pending = runExclusiveHostModal(() => requestDevicePermission("Camera"))
+    .then((result) =>
+      result.match(
+        (granted) => {
+          if (granted) cameraGrantCache = true;
+          return granted;
+        },
+        (err) => {
+          const reason =
+            "reason" in err && typeof err.reason === "string" ? err.reason : "unknown";
+          throw new Error(`[host] requestCameraPermission failed: ${reason}`);
+        },
+      ),
+    )
+    .finally(() => {
+      inFlightCameraGrant = null;
+    });
+  inFlightCameraGrant = pending;
+  return pending;
+}
+
+/**
+ * Drop the cached camera grant so the next `requestCameraPermission()`
+ * call re-issues the host modal. Called from `useCameraPermission().retry()`
+ * — after the CameraDeniedScreen the user has (presumably) fixed their
+ * grant in host settings and the next probe must reflect that. NEVER
+ * call from random code paths; the cache exists precisely so the happy
+ * path doesn't re-modal.
+ */
+export function resetCameraPermissionCache(): void {
+  cameraGrantCache = null;
+  inFlightCameraGrant = null;
 }
 
 
@@ -462,6 +500,8 @@ export function __resetHostConnectionForTests(): void {
   inFlightAllocations.clear();
   remoteOriginOutcomes.clear();
   inFlightRemoteOrigins.clear();
+  cameraGrantCache = null;
+  inFlightCameraGrant = null;
 }
 
 // ── Spektr extension injection (iOS-specific gate) ────────────────

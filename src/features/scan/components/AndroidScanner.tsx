@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import { requestCameraPermission } from "@/shared/api/host";
 import { captureError } from "@/telemetry";
 
 import { startQrScannerLibScanner } from "@/features/scan/lib/backend-qr-scanner.ts";
@@ -18,10 +17,7 @@ export interface AndroidScannerProps {
   onStartError?: (error: ScannerError) => void;
 }
 
-type Stage =
-  | { kind: "askingHost" }
-  | { kind: "starting" }
-  | { kind: "scanning" };
+type Stage = { kind: "starting" } | { kind: "scanning" };
 
 /**
  * Android (and other non-iOS, e.g. desktop dot.li) scan surface — bare
@@ -43,13 +39,14 @@ type Stage =
  * the extra component-level retry because its camera release is async
  * and longer-tailed; Android does not.
  *
- * Two-phase startup:
- *   1. **Host permission gate.** `requestCameraPermission()` flips the
- *      host/iframe `allow="camera"` before we touch `getUserMedia`
- *      (matters for desktop dot.li, which also routes here).
- *   2. **Scanner start.** The backend acquires the camera, attaches it
- *      to a `<video>` it owns, and polls `BarcodeDetector.detect()` at
- *      10 Hz.
+ * **Single-phase startup.** The host camera grant is resolved upstream
+ * by `useCameraPermission` (gated in `ScanPage`) before this component
+ * ever mounts, so we skip the redundant `requestCameraPermission()`
+ * call here — it was the source of the per-receipt extra modal. The
+ * backend acquires the camera, attaches it to a `<video>` it owns, and
+ * polls `BarcodeDetector.detect()` at 10 Hz. A real OS-level denial
+ * still surfaces via `classifyStartError` → `permissionDenied` →
+ * `onPermissionDenied`.
  *
  * Ghost guard: a leaving-slot `<ScreenTransition>` copy is `aria-hidden`
  * and must not open a second camera session — `isLiveScanHost` makes it a
@@ -61,7 +58,7 @@ export function AndroidScanner({
   onStartError,
 }: AndroidScannerProps) {
   const elementRef = useRef<HTMLDivElement>(null);
-  const [stage, setStage] = useState<Stage>({ kind: "askingHost" });
+  const [stage, setStage] = useState<Stage>({ kind: "starting" });
 
   // Latch handlers so the effect's deps stay empty without going stale
   // when the parent passes new functions on each render.
@@ -77,37 +74,15 @@ export function AndroidScanner({
     let handle: ScannerHandle | null = null;
 
     void (async () => {
-      // Ghost guard FIRST — a leaving-slot transition copy must not open
-      // the camera (and must not even trigger a host permission probe).
+      // Ghost guard — a leaving-slot transition copy must not open the
+      // camera. The host grant is already resolved upstream by
+      // `useCameraPermission`; nothing to await before the start.
       const host = elementRef.current;
       if (!isLiveScanHost(host)) return;
 
-      // Phase 1: host permission gate.
-      let granted: boolean;
-      try {
-        granted = await requestCameraPermission();
-      } catch (caught) {
-        // Defensive — should not throw, but treat as "no host, proceed"
-        // so the browser's native getUserMedia prompt can take over.
-        console.warn("[w3spay/scanner] camera permission probe failed", caught);
-        captureError(caught, { subsystem: "scanner", op: "permission-probe" });
-        granted = true;
-      }
-      if (cancelled) return;
-
-      if (!granted) {
-        onPermissionDeniedRef.current?.();
-        return;
-      }
-
-      // Re-check liveness after the async permission round-trip.
-      if (!isLiveScanHost(elementRef.current)) return;
-
-      setStage({ kind: "starting" });
-
-      // Phase 2: single scanner start. The backend pre-warms one
-      // MediaStream (riding out the busy window internally) and hands it
-      // to qr-scanner — no component-level retry loop.
+      // Single scanner start. The backend pre-warms one MediaStream
+      // (riding out the busy window internally) and hands it to
+      // qr-scanner — no component-level retry loop.
       try {
         const next = await startQrScannerLibScanner(host, {
           onDecoded: (text) => {
@@ -189,13 +164,7 @@ export function AndroidScanner({
       />
       {stage.kind !== "scanning" ? (
         <div className="scanning__overlay" role="status">
-          <Spinner
-            label={
-              stage.kind === "askingHost"
-                ? "Asking for camera access…"
-                : "Starting camera…"
-            }
-          />
+          <Spinner label="Starting camera…" />
         </div>
       ) : null}
     </div>

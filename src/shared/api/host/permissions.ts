@@ -21,11 +21,23 @@
  * Host-readiness gate: the probe also waits for `useHostWalletSnapshot().isReady`
  * — the camera modal must not fire before the auto-initing store's
  * handshake completes.
+ *
+ * **No OS-level exercise.** We do NOT call `getUserMedia` here to verify
+ * the host's grant. Doing so would open and immediately stop a brief
+ * camera stream — which on platforms with an "Allow once" / "Only this
+ * time" native option **kills the grant before the scanner ever uses
+ * it**, causing the OS to re-prompt the user when the scanner opens the
+ * camera for real. The scanner backend already classifies its own
+ * `getUserMedia` failures (`permissionDenied` / `cameraUnavailable` via
+ * `classifyStartError` in `features/scan/lib/camera-stream.ts`) and the
+ * `WasmScanner` retries the transient `cameraUnavailable` case, so a
+ * stale OS grant is caught + recovered without burning a prompt up
+ * front.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { requestCameraPermission } from "./connection.ts";
+import { requestCameraPermission, resetCameraPermissionCache } from "./connection.ts";
 import { useHostWalletSnapshot } from "./wallet.ts";
 
 export type CameraPermissionOutcome =
@@ -88,78 +100,6 @@ export function cameraPermissionGate(input: {
   return { kind: "probe" };
 }
 
-/** Result of `exerciseCamera`. */
-export type CameraExerciseResult =
-  | { kind: "ok" }
-  | { kind: "failed"; reason: CameraExerciseFailureReason };
-
-/**
- * Why the OS-level exercise didn't open the camera. The hook uses
- * this only to decide between `denied` vs an opaque
- * `host-unavailable` — the dapp's scanner backend handles its own
- * detailed classification when it re-acquires the camera for real.
- */
-export type CameraExerciseFailureReason =
-  /** `NotAllowedError`. OS-level permission has been revoked or never granted. */
-  | "denied"
-  /** `NotReadable`/`NotFound`/`OverconstrainedError` — camera held or absent. */
-  | "unavailable"
-  /** `getUserMedia` is missing in this runtime (SSR / non-browser test). */
-  | "no-runtime";
-
-/**
- * Briefly open the rear camera and immediately release it, returning
- * whether the OS-level grant is actually live.
- *
- * Why: `requestCameraPermission()` reports what the *host* knows. On
- * the TUA Android shell that answer is cached — once the user clicks
- * through the host modal it returns `true` for the rest of the page
- * session. But Android's "Only this time" grant on the native popup
- * is single-use: it dies as soon as the camera closes. Next time the
- * dapp acquires the camera, the host says "granted" but `getUserMedia`
- * fails (typically `NotReadableError`) and the scanner spinner sits
- * forever.
- *
- * The exercise is a truth probe: open the camera, immediately stop
- * every track, report what happened. The brief acquire/release leaves
- * a few-hundred-ms busy window before the scanner re-acquires for
- * real — that's what the scanner backend's own busy retry exists to
- * absorb.
- */
-export async function exerciseCamera(): Promise<CameraExerciseResult> {
-  if (
-    typeof navigator === "undefined" ||
-    navigator.mediaDevices?.getUserMedia == null
-  ) {
-    return { kind: "failed", reason: "no-runtime" };
-  }
-  let stream: MediaStream;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { facingMode: "environment" },
-    });
-  } catch (caught) {
-    const name = caught instanceof Error ? caught.name : "";
-    if (name === "NotAllowedError") {
-      return { kind: "failed", reason: "denied" };
-    }
-    // NotReadableError, NotFoundError, OverconstrainedError,
-    // AbortError — camera can't be opened right now. Surface as
-    // unavailable so the UI prompts the user (e.g. reload to re-grant
-    // after "Only this time" expired) rather than silently routing to
-    // the scanner where getUserMedia will fail again.
-    return { kind: "failed", reason: "unavailable" };
-  }
-  for (const track of stream.getTracks()) {
-    try {
-      track.stop();
-    } catch {
-      // Per-track teardown errors don't matter for the truth probe.
-    }
-  }
-  return { kind: "ok" };
-}
 
 export function useCameraPermission(
   options: UseCameraPermissionOptions,
@@ -196,32 +136,20 @@ export function useCameraPermission(
         console.warn("[sdk/camera-permission] probe threw", caught);
         granted = true;
       }
-      if (!granted) {
-        setState({ kind: "denied" });
-        return;
-      }
-      // Verify the OS-level grant matches what the host reported.
-      // `requestCameraPermission()` can return `true` from cache while
-      // Android has revoked the actual grant (e.g. user picked "Only
-      // this time" on the native prompt and the camera has since
-      // closed). The exercise opens the camera briefly and reports
-      // the truth.
-      const exercise = await exerciseCamera();
-      if (exercise.kind === "ok" || exercise.reason === "no-runtime") {
-        // `no-runtime` only happens in SSR / unit tests where there's
-        // no `navigator.mediaDevices`; trust the host's grant in that
-        // case since there's nothing to verify against.
-        setState({ kind: "granted" });
-        return;
-      }
-      console.warn(
-        `[sdk/camera-permission] host reported granted but exercise failed (${exercise.reason}); reporting denied`,
-      );
-      setState({ kind: "denied" });
+      setState(granted ? { kind: "granted" } : { kind: "denied" });
     } finally {
       inFlightRef.current = false;
     }
   }, [wallet.isOutsideHost, wallet.isReady]);
+
+  // Retry surface for `CameraDeniedScreen`: the user has (presumably)
+  // fixed their grant in host settings, so the cached "granted" answer
+  // (if any) is stale. Clear it before re-probing so the host modal
+  // re-fires and the truth wins.
+  const retry = useCallback(async () => {
+    resetCameraPermissionCache();
+    await probe();
+  }, [probe]);
 
   useEffect(() => {
     const decision = cameraPermissionGate({
@@ -240,5 +168,5 @@ export function useCameraPermission(
     }
   }, [enabled, wallet.isOutsideHost, wallet.isReady, probe]);
 
-  return { state, retry: probe };
+  return { state, retry };
 }

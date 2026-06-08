@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import { requestCameraPermission } from "@/shared/api/host";
 import { captureError } from "@/telemetry";
 
 import { startZxingWasmScanner } from "@/features/scan/lib/backend-zxing-wasm.ts";
@@ -18,10 +17,7 @@ export interface WasmScannerProps {
   onStartError?: (error: ScannerError) => void;
 }
 
-type Stage =
-  | { kind: "askingHost" }
-  | { kind: "starting" }
-  | { kind: "scanning" };
+type Stage = { kind: "starting" } | { kind: "scanning" };
 
 /**
  * WASM scan surface — drives the Worker-hosted ZXing-C++ WASM decoder in
@@ -37,14 +33,15 @@ type Stage =
  *     `AndroidScanner.tsx` is the default and is what actually works on
  *     Android.
  *
- * Two-phase startup:
- *
- *   1. **Host permission gate.** Calls `requestCameraPermission()` via
- *      the Polkadot SDK so the host flips `allow="camera"` before we
- *      touch `getUserMedia`.
- *   2. **Scanner start with transparent auto-retry.** The WASM backend
- *      acquires the rear camera, mounts the preview `<video>`, and runs
- *      the decode loop.
+ * **Single-phase startup.** The host camera grant is resolved upstream
+ * by `useCameraPermission` (gated in `ScanPage`) before this component
+ * ever mounts, so we skip the redundant `requestCameraPermission()`
+ * call here — it was the source of the per-receipt extra modal. The
+ * backend acquires the rear camera, mounts the preview `<video>`, and
+ * runs the decode loop. A real OS-level denial (NotAllowedError, e.g.
+ * the user revoked the grant between probe and start) still surfaces
+ * via `classifyStartError` → `permissionDenied` → `onPermissionDenied`,
+ * so the CameraDeniedScreen path is intact.
  *
  * ### Why the retry loop
  *
@@ -78,7 +75,7 @@ export function WasmScanner({
   onStartError,
 }: WasmScannerProps) {
   const elementRef = useRef<HTMLDivElement>(null);
-  const [stage, setStage] = useState<Stage>({ kind: "askingHost" });
+  const [stage, setStage] = useState<Stage>({ kind: "starting" });
 
   // Latch handlers so the effect's deps stay empty without going stale
   // when the parent passes new functions on each render.
@@ -94,38 +91,12 @@ export function WasmScanner({
     let handle: ScannerHandle | null = null;
 
     void (async () => {
-      // Ghost guard FIRST — a leaving-slot transition copy must not open
-      // the camera (and must not even trigger a host permission probe).
+      // Ghost guard — a leaving-slot transition copy must not open the
+      // camera. The host grant is already resolved upstream by
+      // `useCameraPermission`; nothing to await before the start.
       const host = elementRef.current;
       if (!isLiveScanHost(host)) return;
-
-      // Phase 1: host permission gate.
-      let granted: boolean;
-      try {
-        granted = await requestCameraPermission();
-      } catch (caught) {
-        // Defensive — requestCameraPermission() uses .match() internally
-        // and should not throw, but a future SDK revision could. Treat
-        // as "no host, proceed" so getUserMedia can surface the browser's
-        // native prompt.
-        console.warn("[w3spay/scanner] camera permission probe failed", caught);
-        captureError(caught, { subsystem: "scanner", op: "permission-probe" });
-        granted = true;
-      }
-      if (cancelled) return;
-
-      if (!granted) {
-        onPermissionDeniedRef.current?.();
-        return;
-      }
-
-      // Re-check liveness after the async permission round-trip: the
-      // screen may have started transitioning out while we awaited.
-      if (!isLiveScanHost(elementRef.current)) return;
-
-      setStage({ kind: "starting" });
-
-      // Phase 2: scanner start with transparent auto-retry on transient
+      // Scanner start with transparent auto-retry on transient
       // camera-unavailable errors.
       //
       // Each attempt is bounded by the inner retry, so individual hangs
@@ -264,13 +235,7 @@ export function WasmScanner({
       />
       {stage.kind !== "scanning" ? (
         <div className="scanning__overlay" role="status">
-          <Spinner
-            label={
-              stage.kind === "askingHost"
-                ? "Asking for camera access…"
-                : "Starting camera…"
-            }
-          />
+          <Spinner label="Starting camera…" />
         </div>
       ) : null}
     </div>
