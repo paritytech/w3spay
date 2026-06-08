@@ -34,6 +34,7 @@ import type { PaymentHostBalance } from "@/features/host/lib/payment-host.ts";
 import { useCoinPaymentHost } from "@/features/host/api/coin-payment-host.ts";
 import { hostKeys } from "@/features/host/api/keys.ts";
 import { envConfig } from "@/shared/config.ts";
+import { runExclusiveHostModal } from "@/shared/api/host";
 
 export type PaymentBalanceState =
   | { kind: "idle" }
@@ -58,21 +59,28 @@ export function usePaymentBalance(): UsePaymentBalanceResult {
     queryFn: async (): Promise<PaymentHostBalance> => {
       // `enabled` keeps this from running while `host` is null.
       if (host === null) throw new Error("payment host not resolved");
-      console.info("[w3spay/balance] fetching…");
-      const timeout = new Promise<never>((_, reject) =>
+      // The vault balance-access consent is a host modal; serialize it
+      // behind any earlier modal (e.g. the Sentry remote-origin grant) so
+      // the host can't silently drop it. The lock releases when balance
+      // resolves OR the timeout fires, so a hung payment surface can't
+      // park later modals.
+      return runExclusiveHostModal(async () => {
+        console.info("[w3spay/balance] fetching…");
+        const { promise: timeout, reject: rejectTimeout } =
+          Promise.withResolvers<never>();
         setTimeout(
           () =>
-            reject(
+            rejectTimeout(
               new Error(
                 "Balance request timed out. Check your connection and try again.",
               ),
             ),
           BALANCE_FETCH_TIMEOUT_MS,
-        ),
-      );
-      const balance = await Promise.race([host.paymentBalance(), timeout]);
-      console.info("[w3spay/balance] fetched", { available: balance.available });
-      return balance;
+        );
+        const balance = await Promise.race([host.paymentBalance(), timeout]);
+        console.info("[w3spay/balance] fetched", { available: balance.available });
+        return balance;
+      });
     },
     enabled: host !== null,
     staleTime: 15_000,

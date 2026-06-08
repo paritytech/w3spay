@@ -278,6 +278,56 @@ export function isHostConnected(): boolean {
   return connected;
 }
 
+// ── Permission-modal serialization ────────────────────────────────
+
+/**
+ * The host renders exactly ONE permission / consent modal at a time and
+ * silently DROPS any modal request that arrives while another is open.
+ * Several subsystems pop modals independently at boot — the Sentry
+ * remote-origin grant fired from `instrument.ts` (pre-React,
+ * fire-and-forget), the vault balance-access consent from the balance
+ * query, and the camera grant from the scan page — so without
+ * coordination the later requests race the Sentry modal and vanish. The
+ * symptom: only the first modal appears; the rest don't fire until the
+ * user leaves and re-enters the app (which drains them because the
+ * persisted grants no longer pop a modal).
+ *
+ * `runExclusiveHostModal` funnels every modal-popping host call through a
+ * single FIFO queue: request N+1 only fires once modal N has settled
+ * (granted, denied, or timed out). A denial never wedges the queue — the
+ * chain advances on settle, not on success.
+ *
+ * Only wrap discrete request/response calls whose promise settles when
+ * the modal closes (`requestPermission`, `requestDevicePermission`,
+ * `requestResourceAllocation`, and the one-shot balance subscription that
+ * `paymentBalance()` resolves on first value). NEVER wrap a long-lived
+ * subscription — the lock would be held for its whole lifetime and
+ * starve every later modal.
+ */
+const HOST_MODAL_MAX_LOCK_MS = 120_000;
+
+let hostModalQueue: Promise<unknown> = Promise.resolve();
+
+export function runExclusiveHostModal<T>(task: () => PromiseLike<T>): Promise<T> {
+  // Run the task whether the previous entry resolved or rejected.
+  const run = Promise.resolve(hostModalQueue).then(task, task);
+  // Advance the tail when this task settles, or after a hard ceiling so a
+  // host that never answers a modal can't starve later modals forever.
+  // The caller still awaits the real (possibly rejecting) `run`.
+  const { promise: ceiling, resolve: openCeiling } = Promise.withResolvers<void>();
+  const timer = setTimeout(openCeiling, HOST_MODAL_MAX_LOCK_MS);
+  hostModalQueue = Promise.race([
+    run.then(
+      () => undefined,
+      () => undefined,
+    ),
+    ceiling,
+  ]).finally(() => {
+    clearTimeout(timer);
+  });
+  return run;
+}
+
 /**
  * Ask the host to grant the camera permission, returning the user's
  * grant/deny decision.
@@ -305,7 +355,7 @@ export function isHostConnected(): boolean {
  */
 export async function requestCameraPermission(): Promise<boolean> {
   if (!isInHost()) return true;
-  const result = await requestDevicePermission("Camera");
+  const result = await runExclusiveHostModal(() => requestDevicePermission("Camera"));
   return result.match(
     (granted) => granted,
     (err) => {
@@ -385,9 +435,11 @@ async function doRequestRemoteOrigins(
   try {
     const ready = await connectToHost();
     if (!ready) return { granted: false, error: "host transport not ready" };
-    return await requestPermission({ tag: "Remote", value: origins }).match<RemoteOriginPermissionOutcome>(
-      (granted) => ({ granted }),
-      (err) => ({ granted: false, error: err.payload?.reason ?? err.message }),
+    return await runExclusiveHostModal(() =>
+      requestPermission({ tag: "Remote", value: origins }).match<RemoteOriginPermissionOutcome>(
+        (granted) => ({ granted }),
+        (err) => ({ granted: false, error: err.payload?.reason ?? err.message }),
+      ),
     );
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : String(caught);
@@ -574,7 +626,7 @@ function claimOneAllowance(
         timeoutMs,
       );
     });
-    const call = (async () => {
+    const call = runExclusiveHostModal(async () => {
       try {
         const result = await Promise.resolve(
           hostApi.requestResourceAllocation(
@@ -610,7 +662,7 @@ function claimOneAllowance(
         const reason = caught instanceof Error ? caught.message : String(caught);
         return { kind, granted: false, error: reason };
       }
-    })();
+    });
     const outcome = await Promise.race([call, timeout]);
     if (timer !== undefined) clearTimeout(timer);
     allocationOutcomes.set(kind, outcome);
