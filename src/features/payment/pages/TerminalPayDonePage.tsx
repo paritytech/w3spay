@@ -24,9 +24,7 @@ export function TerminalPayDonePage() {
       merchantDisplayName={merchantDisplayName}
       settlement={flow.payment.settlement}
       onAcknowledge={actions.startScan}
-      onOpenWallet={() =>
-        void navigate({ to: PATHS.wallet, search: { tab: "activity" } })
-      }
+      onOpenWallet={() => void navigate({ to: PATHS.wallet })}
     />
   );
 }

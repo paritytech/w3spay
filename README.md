@@ -1,11 +1,11 @@
-# W3SPay
+# W3S Receipts
 
 > [!WARNING]
 > The following is a prototype, reference implementation, and proof-of-concept. This open source code is provided for research, experimentation, and developer education only. This code has not been audited, is actively experimental, and may contain bugs, vulnerabilities, or incomplete features. Use at your own risk.
 
 This is code developed and published by Parity as an experimental proof-of-concept. It is **not** a Parity product or service, and Parity does not operate, host, deploy, or endorse any downstream deployment of it — downstream operators run their own forks at their own discretion.
 
-Mobile-first customer checkout for the W3sPay payment surface. The app scans merchant receipt and terminal-payment codes, resolves pilot merchants from the on-chain registry, asks the Polkadot host to execute CASH payments, and keeps a local wallet-style activity and receipt history.
+Mobile-first customer checkout for the W3S Receipts payment surface. The app scans merchant receipt and terminal-payment codes, resolves pilot merchants from the on-chain registry, asks the Polkadot host to execute CASH payments, and keeps a local wallet-style activity and receipt history.
 
 
 ## Getting Started

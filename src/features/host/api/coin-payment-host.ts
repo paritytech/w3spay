@@ -2,10 +2,12 @@
 // @paritytech
 
 /**
- * Resolve the narrow `PaymentHost` exposed by the surrounding Polkadot host
- * (Desktop webview / iframe / native mobile) via the product-sdk Host API,
- * as a TanStack Query.
- *
+ * Readiness signal for the surrounding Polkadot host's payment bridge.
+ * Polls the host-API wallet snapshot until the bridge resolves (or the
+ * budget expires), then exposes a `status` for the routing gate. The
+ * actual send path lives in `@/features/payment/api/send-payment.ts` and
+ * resolves the host SDK manager itself — this hook does NOT expose a host
+ * object.
  */
 
 import { useRef } from "react";
@@ -15,38 +17,34 @@ import { isDevStandalone, isInHost, useHostWalletSnapshot } from "@/shared/api/h
 
 import { envConfig } from "@/config";
 import { hostKeys } from "@/features/host/api/keys.ts";
-import { getDevPaymentHost } from "@/features/host/lib/dev-payment-host.ts";
-import {
-  resolvePaymentHost,
-  type PaymentHost,
-} from "@/features/host/lib/payment-host.ts";
 
 export type CoinPaymentHostStatus = "pending" | "ready" | "timeout";
 
 export interface CoinPaymentHostResult {
-  readonly host: PaymentHost | null;
   readonly status: CoinPaymentHostStatus;
 }
 
 /**
- * Pure status reducer — exported so the transition table is testable without
- * React or wall-clock waits. `timeoutMs <= 0` is treated as timed-out
- * immediately, keeping the function total.
+ * Pure status reducer — exported so the transition table is testable
+ * without React or wall-clock waits. `timeoutMs <= 0` is treated as
+ * timed-out immediately, keeping the function total.
  */
 export function coinPaymentHostStatus(
-  resolvedHost: PaymentHost | null,
+  bridgeReady: boolean,
   elapsedMs: number,
   timeoutMs: number,
 ): CoinPaymentHostStatus {
-  if (resolvedHost !== null) return "ready";
+  if (bridgeReady) return "ready";
   if (elapsedMs >= timeoutMs) return "timeout";
   return "pending";
 }
 
-const PENDING: CoinPaymentHostResult = { host: null, status: "pending" };
+const PENDING: CoinPaymentHostResult = { status: "pending" };
+const READY: CoinPaymentHostResult = { status: "ready" };
+const TIMEOUT: CoinPaymentHostResult = { status: "timeout" };
 
 export function useCoinPaymentHost(): CoinPaymentHostResult {
-  // Reading the wallet snapshot gates the standard Host API branch on the
+  // Reading the wallet snapshot gates the bridge-ready branch on the
   // product-account resolution completing and re-renders us (and thus
   // refreshes the query fn closure) when `isReady` flips.
   const wallet = useHostWalletSnapshot();
@@ -56,7 +54,7 @@ export function useCoinPaymentHost(): CoinPaymentHostResult {
   const startedAtRef = useRef<number>(Date.now());
 
   // 15s budget inside a real container (iOS webview-port bring-up); much
-  // shorter standalone before we hand the dev host over.
+  // shorter standalone before we declare the in-memory dev path usable.
   const timeoutMs = isInHost()
     ? envConfig.host.waitTimeoutMs
     : envConfig.host.standaloneWaitTimeoutMs;
@@ -64,26 +62,19 @@ export function useCoinPaymentHost(): CoinPaymentHostResult {
   const query = useQuery<CoinPaymentHostResult>({
     queryKey: hostKeys.coinPaymentHost(),
     queryFn: () => {
-      const host = resolvePaymentHost({
-        devStandalone: false,
-        hosted: isInHost(),
-        hostApiReady: wallet.isReady,
-        getDevHost: getDevPaymentHost,
-      });
-      if (host !== null) return { host, status: "ready" };
+      const bridgeReady = isInHost() && wallet.isReady;
+      if (bridgeReady) return READY;
       if (wallet.isInitializing) return PENDING;
       const status = coinPaymentHostStatus(
-        null,
+        false,
         Date.now() - startedAtRef.current,
         timeoutMs,
       );
       if (status === "timeout") {
         // Re-check the dev gate after the wait — in dev standalone the
-        // in-memory reference keeps the local loop usable; in production
-        // a missing bridge becomes `hostUnavailable` upstream.
-        return isDevStandalone()
-          ? { host: getDevPaymentHost(), status: "ready" }
-          : { host: null, status: "timeout" };
+        // in-memory reference manager keeps the local loop usable; in
+        // production a missing bridge becomes `hostUnavailable` upstream.
+        return isDevStandalone() ? READY : TIMEOUT;
       }
       return PENDING;
     },

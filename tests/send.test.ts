@@ -1,23 +1,29 @@
 import { describe, expect, it } from "vitest";
 
-import type { PaymentHost } from "@/features/host/lib/payment-host.ts";
 import { sendPayment } from "@/features/payment/api/send-payment.ts";
+import type { PaymentManager } from "@/features/payment/lib/payment-sender.ts";
 
 describe("sendPayment", () => {
   it("sends H160 merchant destinations as zero-left-padded AccountId32 bytes", async () => {
     const observed: { destination?: Uint8Array } = {};
-    const host: PaymentHost = {
-      async paymentBalance() {
-        return { available: 0 };
-      },
-      async paymentRequest(_amountCents, destination) {
+    const manager: PaymentManager = {
+      async requestPayment(_plancks, destination) {
         observed.destination = destination;
         return { id: "payment-1" };
+      },
+      subscribePaymentStatus(_id, callback) {
+        queueMicrotask(() => callback({ type: "completed" }));
+        return {
+          unsubscribe() {},
+          onInterrupt() {
+            return () => {};
+          },
+        };
       },
     };
 
     const result = await sendPayment({
-      host,
+      manager,
       amountCents: 900,
       merchantDestination: {
         kind: "reviveContract",
@@ -28,7 +34,7 @@ describe("sendPayment", () => {
     expect(result).toEqual({ paymentId: "payment-1", paidCents: 900, settlement: "settled" });
     const destination = observed.destination;
     expect(destination).toBeInstanceOf(Uint8Array);
-    if (destination === undefined) throw new Error("host did not receive destination bytes");
+    if (destination === undefined) throw new Error("manager did not receive destination bytes");
     expect(destination).toHaveLength(32);
     expect([...destination.slice(0, 12)]).toEqual(new Array(12).fill(0));
     expect([...destination.slice(12)]).toEqual([

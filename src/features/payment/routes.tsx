@@ -10,11 +10,12 @@
  * child.
  */
 
-import { createRoute } from "@tanstack/react-router";
+import { createRoute, redirect } from "@tanstack/react-router";
 
 import { PATHS } from "@/app/router/routes.ts";
 import { rootRoute } from "@/app/router/root.tsx";
 import { requireFlow } from "@/app/router/guards.ts";
+import { persistSaveReceiptFromUrl } from "@/features/scan/lib/save-receipt-deeplink.ts";
 
 import { AlreadyPaidPage } from "@/features/payment/pages/AlreadyPaidPage.tsx";
 import { CameraErrorPage } from "@/features/payment/pages/CameraErrorPage.tsx";
@@ -41,6 +42,28 @@ export const scanRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: PATHS.scan,
   component: ScanPage,
+});
+
+/**
+ * `/save-receipt` deep-link landing. The host opens the SPA at
+ * `#/save-receipt?…` (cold start) or navigates an already-open SPA there
+ * (warm). Cold start is pre-rewritten to `/receipt-saved` by
+ * `consumeSaveReceiptDeepLink` before the router boots; this route is the
+ * warm-navigation safety net so the link never falls through to Not Found.
+ * `beforeLoad` parses + persists the payload, then redirects to the
+ * receipt-saved confirmation (or the scan index when there's no valid payload).
+ */
+export const saveReceiptRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: PATHS.saveReceipt,
+  beforeLoad: () => {
+    throw redirect(
+      persistSaveReceiptFromUrl()
+        ? { to: PATHS.receiptSaved, replace: true }
+        : { to: PATHS.scan, replace: true },
+    );
+  },
+  component: () => null,
 });
 
 /** Customer flow + error / outcome routes. */

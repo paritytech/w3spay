@@ -41,9 +41,9 @@ export function unknownMerchantCopy(): UnknownMerchantCopy {
   return {
     eyebrow: "Not yet",
     headLead: "This place isn't",
-    headSuffix: "on W3sPay yet.",
+    headSuffix: "on W3S Receipts yet.",
     sub:
-      "This till hasn't joined the W3sPay pilot. Pay another way today, and check back soon.",
+      "This till hasn't joined the W3S Receipts pilot. Pay another way today, and check back soon.",
   };
 }
 

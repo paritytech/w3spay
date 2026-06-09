@@ -43,7 +43,7 @@ export function CameraStartFailedScreen({ onRetry }: CameraStartFailedScreenProp
       <Dotted style={{ marginTop: 22 }} />
       <Sub>
         Close any other app using the camera, then try again. If it keeps
-        happening, reopen W3sPay.
+        happening, reopen W3S Receipts.
       </Sub>
       <div style={{ flex: 1 }} />
     </Frame>

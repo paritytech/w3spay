@@ -15,12 +15,11 @@
 import { useCallback, useState } from "react";
 
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
-import { formatHistoryDate } from "@/features/wallet/api/payment-history.ts";
 import { itemLineTotalCents, type ReceiptRecord } from "@/features/wallet/api/receipts.ts";
 import { useQrSvg } from "@/features/wallet/api/qr-svg.ts";
 import { saveReceiptImage } from "@/shared/utils/save-receipt-image.ts";
 import { Dotted, Eyebrow, Frame, Head, Icon, IconButton, MetaRow, SecondaryButton } from "@/shared/components/primitives.tsx";
-import { shortHex, splitDisplayName } from "@/shared/utils/format.ts";
+import { formatHistoryDate, shortHex, splitDisplayName } from "@/shared/utils/format.ts";
 
 export interface ReceiptDetailScreenProps {
   record: ReceiptRecord;
@@ -164,21 +163,6 @@ export function ReceiptDetailScreen({ record, onBack }: ReceiptDetailScreenProps
         </div>
 
         <Dotted />
-
-        {qrSvg ? (
-          <>
-            <div className="receipt-qr">
-              <div
-                className="receipt-qr__svg"
-                aria-label="Original receipt code"
-                role="img"
-                dangerouslySetInnerHTML={{ __html: qrSvg }}
-              />
-              <p className="receipt-qr__caption">The code from the printed slip.</p>
-            </div>
-            <Dotted />
-          </>
-        ) : null}
 
         <Eyebrow>Receipt details</Eyebrow>
         <dl style={{ margin: "8px 0 0" }}>

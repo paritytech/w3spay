@@ -189,11 +189,149 @@ function parseItems(value: unknown): readonly ReceiptItem[] {
   return items;
 }
 
+/** Wire-format query keys (abbreviated for QR density). Single source of truth. */
+export const PARAM = {
+  version: "v",
+  saleId: "id",
+  amount: "a",
+  asset: "as",
+  currency: "c",
+  taxRate: "t",
+  issuedAt: "ts",
+  businessName: "bn",
+  businessAddressLine1: "a1",
+  businessAddressLine2: "a2",
+  businessPhone: "tel",
+  item: "i",
+  blockHash: "bh",
+  blockNumber: "bk",
+  merchantAddress: "m",
+} as const;
+
 /**
- * Parse a decimal money string (e.g. `"7.50"`, `"3"`) into integer cents.
- * Format pins `.` separator and ≤2 fractional digits — no thousands separator,
- * no `,` locale. Float-free: digits accumulated by character so `"19.99"`
- * never round-trips through an IEEE-754 double.
+ * Detect a save-receipt deeplink by scheme + path, regardless of the configured
+ * product domain. Slices at the first `?`, so it matches the canonical fragment
+ * form (`…/#/save-receipt?…`) and the legacy path form alike.
+ */
+export function isSaveReceiptUrl(raw: string): boolean {
+  const q = raw.indexOf("?");
+  const path = q >= 0 ? raw.slice(0, q) : raw;
+  return path.startsWith("polkadotapp://") && path.endsWith("/save-receipt");
+}
+
+/** Parse a save-receipt deeplink URL into a ParsedReceipt; throws ReceiptParseError. */
+export function parseSaveReceiptUrl(raw: string): ParsedReceipt {
+  const q = raw.indexOf("?");
+  return parseSaveReceiptParams(new URLSearchParams(q >= 0 ? raw.slice(q + 1) : ""));
+}
+
+/**
+ * Validate save-receipt query params into a ParsedReceipt. Shared by the QR
+ * path (`parseSaveReceiptUrl`) and the boot deep-link consumer, which receives
+ * the query from the SPA launch URL instead.
+ */
+export function parseSaveReceiptParams(params: URLSearchParams): ParsedReceipt {
+  const version = params.get(PARAM.version);
+  if (version !== String(RECEIPT_QR_VERSION)) {
+    throw new ReceiptParseError(
+      "unsupportedVersion",
+      `unsupported receipt version ${version === null ? "<missing>" : `"${version}"`} — only v${RECEIPT_QR_VERSION} is accepted`,
+    );
+  }
+  const saleId = requireParam(params, PARAM.saleId);
+  const asset = requireParam(params, PARAM.asset);
+  const currency = requireParam(params, PARAM.currency);
+  const issuedAt = requireParam(params, PARAM.issuedAt);
+  const amountCents = parseDecimalToCents(requireParam(params, PARAM.amount));
+  const taxRatePercent = Number(requireParam(params, PARAM.taxRate));
+  if (!Number.isFinite(taxRatePercent)) {
+    throw new ReceiptParseError(
+      "missingField",
+      `parameter "${PARAM.taxRate}" must be a finite number`,
+    );
+  }
+  const blockNumberRaw = optionalParam(params, PARAM.blockNumber);
+  const blockNumber =
+    blockNumberRaw !== undefined && Number.isFinite(Number(blockNumberRaw))
+      ? Number(blockNumberRaw)
+      : undefined;
+  return {
+    version: RECEIPT_QR_VERSION,
+    saleId,
+    amountCents,
+    asset,
+    currency,
+    taxRatePercent,
+    business: {
+      name: optionalParam(params, PARAM.businessName) ?? "",
+      addressLine1: optionalParam(params, PARAM.businessAddressLine1),
+      addressLine2: optionalParam(params, PARAM.businessAddressLine2),
+      phone: optionalParam(params, PARAM.businessPhone),
+    },
+    items: params.getAll(PARAM.item).map(parseItemSpec),
+    issuedAt,
+    blockHash: optionalParam(params, PARAM.blockHash),
+    blockNumber,
+    merchantAddress: optionalParam(params, PARAM.merchantAddress),
+  };
+}
+
+/** Parse one repeated `item` value: `name|quantity|unitPrice`. */
+function parseItemSpec(spec: string, index: number): ReceiptItem {
+  const parts = spec.split("|");
+  if (parts.length < 3) {
+    throw new ReceiptParseError(
+      "malformedItems",
+      `item ${index} must be "name|quantity|unitPrice", got "${spec}"`,
+    );
+  }
+  const name = parts[0]!.trim();
+  if (name.length === 0) {
+    throw new ReceiptParseError("malformedItems", `item ${index} is missing a name`);
+  }
+  const quantity = Number(parts[1]);
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new ReceiptParseError(
+      "malformedItems",
+      `item ${index} quantity must be a positive integer, got "${parts[1]}"`,
+    );
+  }
+  return {
+    name,
+    quantity,
+    unitPriceCents: parseDecimalToCents(parts[2]!, "malformedItems"),
+  };
+}
+
+/** Required query param: trimmed, non-empty, else `missingField`. */
+function requireParam(params: URLSearchParams, key: string): string {
+  const value = params.get(key);
+  const trimmed = value === null ? "" : value.trim();
+  if (trimmed.length === 0) {
+    throw new ReceiptParseError(
+      "missingField",
+      `missing or empty required parameter "${key}"`,
+    );
+  }
+  return trimmed;
+}
+
+/** Optional display param: trimmed if present and non-empty, else omitted. */
+function optionalParam(params: URLSearchParams, key: string): string | undefined {
+  const value = params.get(key);
+  if (value === null) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}
+
+/**
+ * Parse a decimal money string (e.g. `"7.50"`, `"3"`, `"5.123456"`) into
+ * integer cents. Pins the `.` separator — no thousands separator, no `,`
+ * locale. The first two fractional digits are whole cents; any further digits
+ * are sub-cent precision (t3rminal formats money from 6-decimal pUSD planck)
+ * and round half-up to the nearest cent, matching the printed paper receipt.
+ * Float-free: digits are accumulated by character so `"19.99"` never
+ * round-trips through an IEEE-754 double.
  *
  * `code` tags the error with the caller's domain (`malformedAmount` for the
  * total, `malformedItems` for an item line) for a meaningful dispatcher reason.
@@ -229,9 +367,10 @@ export function parseDecimalToCents(
   }
   let cents = 0;
   if (cursor < raw.length) {
-    cursor += 1;
+    cursor += 1; // step past the "."
     let consumed = 0;
-    while (cursor < raw.length && consumed < 2) {
+    let roundUp = false;
+    while (cursor < raw.length) {
       const digit = raw.charCodeAt(cursor) - 0x30;
       if (digit < 0 || digit > 9) {
         throw new ReceiptParseError(
@@ -239,18 +378,21 @@ export function parseDecimalToCents(
           `non-digit character "${raw[cursor]}" in fractional part of "${raw}"`,
         );
       }
-      cents = cents * 10 + digit;
+      // First two fractional digits are whole cents; the third decides a
+      // round-half-up. t3rminal emits up to six fractional digits (6-decimal
+      // pUSD), so we consume the rest as sub-cent precision rather than
+      // rejecting the whole receipt.
+      if (consumed < 2) {
+        cents = cents * 10 + digit;
+      } else if (consumed === 2 && digit >= 5) {
+        roundUp = true;
+      }
       consumed += 1;
       cursor += 1;
       sawDigit = true;
     }
     if (consumed === 1) cents *= 10; // "1.5" => 150 cents
-    if (cursor < raw.length) {
-      throw new ReceiptParseError(
-        code,
-        `unexpected extra digits past two decimals in "${raw}"`,
-      );
-    }
+    if (roundUp) cents += 1; // carry into `whole` handled by `whole * 100 + cents`
   }
   if (!sawDigit) {
     throw new ReceiptParseError(code, `no digits in amount "${raw}"`);

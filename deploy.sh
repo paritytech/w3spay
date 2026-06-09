@@ -32,7 +32,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$SCRIPT_DIR/dist"
 GATEWAY_BASE="${DOTNS_GATEWAY_BASE:-dot.li}"
 BULLETIN_ENV="${BULLETIN_ENV:-paseo-next-v2}"
-BULLETIN_DEPLOY_PUBLISH="${BULLETIN_DEPLOY_PUBLISH:-false}"
+# Resolved in two phases like TARGET below: shell env here, .env fallback after
+# _read_envfile_key is defined. Left empty for now so the fallback can tell an
+# unset var from an explicit value; the false default is applied post-fallback.
+BULLETIN_DEPLOY_PUBLISH="${BULLETIN_DEPLOY_PUBLISH:-}"
 # TARGET is resolved in two phases: shell sources (CLI arg or env) here at
 # the top, then .env files in the block that follows the _read_envfile_key
 # helper definition. Splitting them avoids calling the helper before it's
@@ -173,6 +176,23 @@ fi
 if [[ "$TARGET" != *.dot ]]; then
   TARGET="${TARGET}.dot"
 fi
+
+# Phase 2 of BULLETIN_DEPLOY_PUBLISH resolution: fall back to .env files in
+# Vite precedence order when the shell env didn't set it, then default to
+# false. Mirrors the MNEMONIC/TARGET .env fallbacks above so a single .env
+# entry drives the publish decision without an extra shell export.
+if [[ -z "$BULLETIN_DEPLOY_PUBLISH" ]]; then
+  for _envfile in .env.production.local .env.production .env.local .env; do
+    [[ -f "$SCRIPT_DIR/$_envfile" ]] || continue
+    _resolved="$(_read_envfile_key "$SCRIPT_DIR/$_envfile" BULLETIN_DEPLOY_PUBLISH || true)"
+    if [[ -n "$_resolved" ]]; then
+      BULLETIN_DEPLOY_PUBLISH="$_resolved"
+      echo "==> Using publish flag from ${_envfile} (BULLETIN_DEPLOY_PUBLISH=${BULLETIN_DEPLOY_PUBLISH})."
+      break
+    fi
+  done
+fi
+BULLETIN_DEPLOY_PUBLISH="${BULLETIN_DEPLOY_PUBLISH:-false}"
 
 if [[ -z "$RAW_MNEMONIC" ]]; then
   echo "Error: no mnemonic found. Provide one via:"

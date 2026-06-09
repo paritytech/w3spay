@@ -4,10 +4,9 @@
 /**
  * Index page — boot splash while the scan flow resolves, else the live `<ScanningScreen>`.
  *
- * Camera permission is probed here, not at boot: deferring means the iOS native camera
- * sheet only appears after the balance (payment-permission) modal closes — no modal
- * collision. Probe gated on `balancePermissionResolved`; scanner start gated on
- * `cameraGranted` so `<video>` never mounts before iOS grants.
+ * Camera permission is probed here, not at boot, so the iOS native camera sheet
+ * doesn't race the host's own permission modal. The scanner mount is gated on
+ * `granted` so `<video>` never appears before iOS grants.
  */
 
 import { useEffect } from "react";
@@ -21,7 +20,6 @@ import { usePaymentActions } from "@/features/payment/lib/payment-actions.ts";
 import { useSessionStore } from "@/features/payment/store/session-store.ts";
 import { ScanningScreen } from "@/features/payment/components/ScanningScreen.tsx";
 import { useCameraStore } from "@/features/scan/store/camera-store.ts";
-import { usePaymentBalanceDerived } from "@/features/host/api/balance.ts";
 import { BootScreen } from "@/features/host/components/BootScreen.tsx";
 import { journeyTracker } from "@/shared/utils/telemetry.ts";
 
@@ -33,11 +31,10 @@ export function ScanPage() {
 function ScanningView() {
   const actions = usePaymentActions();
   const navigate = useNavigate();
-  const { availableCents, balancePermissionResolved } = usePaymentBalanceDerived();
 
   // Single call site for `useCameraPermission`; result published to `useCameraStore`
   // so the root gate and the CameraDenied screen can both read it.
-  const cameraPermission = useCameraPermission({ enabled: balancePermissionResolved });
+  const cameraPermission = useCameraPermission({ enabled: true });
   const publishCamera = useCameraStore((s) => s.publish);
   const retry = useCameraStore((s) => s.retry);
   useEffect(() => {
@@ -52,15 +49,15 @@ function ScanningView() {
   // lands within the grace window, and abandon the journey on any other exit.
   useEffect(() => {
     useSessionStore.getState().setLastBadScan(null);
-    journeyTracker.start("qr-scan");
+    journeyTracker.start("w3spay:qr-scan");
     const timeoutId = window.setTimeout(
       () => actions.flushScanGrace(),
       UNSUPPORTED_SCAN_GRACE_MS,
     );
     return () => {
       window.clearTimeout(timeoutId);
-      if (journeyTracker.isActive("qr-scan")) {
-        journeyTracker.fail("qr-scan", "abandoned");
+      if (journeyTracker.isActive("w3spay:qr-scan")) {
+        journeyTracker.fail("w3spay:qr-scan", "abandoned");
       }
     };
   }, [actions]);
@@ -72,9 +69,8 @@ function ScanningView() {
       onScannerStartError={(error) =>
         actions.goToStage({ kind: "cameraError", message: error.message })
       }
-      onOpenWallet={() => void navigate({ to: PATHS.wallet, search: { tab: "activity" } })}
-      availableCents={availableCents}
-      permissionsReady={balancePermissionResolved && cameraGranted}
+      onOpenWallet={() => void navigate({ to: PATHS.wallet })}
+      permissionsReady={cameraGranted}
     />
   );
 }

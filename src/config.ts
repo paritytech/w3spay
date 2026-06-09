@@ -32,15 +32,10 @@ export function readEnv(): EnvConfig {
       readOnlyOrigin: "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
     },
     token: {
-      name: "CASH",
       symbol: "CASH",
-      decimals,
-      displayDecimals,
       plancksPerCent: 10 ** (decimals - displayDecimals),
     },
     payment: {
-      minSpendableCents: 100,
-      dummyBalanceCents: 100_000,
       devStartingBalancePlancks: 10_000_000_000,
     },
     host: {
@@ -51,9 +46,6 @@ export function readEnv(): EnvConfig {
       standaloneWaitTimeoutMs: 250,
     },
     storage: {
-      paymentHistoryKey: "w3spay:payment-history:v2",
-      paymentHistoryMaxEntries: 100,
-      paymentHistorySchemaVersion: 4,
       receiptsKey: "w3spay:receipts:v1",
       receiptsMaxEntries: 100,
       receiptsSchemaVersion: 2,
@@ -68,7 +60,7 @@ export function readEnv(): EnvConfig {
     telemetry: {
       // KILL SWITCH. Flip to `false` to ship telemetry disabled (tracker
       // degrades to console-only; no Sentry network calls or handlers).
-      enabled: false,
+      enabled: envFlag("VITE_W3SPAY_SENTRY_ENABLED", false),
       dsn: envString("VITE_W3SPAY_SENTRY_DSN", ""),
       environment: envString(
         "VITE_W3SPAY_SENTRY_ENV",

@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
         <section className="editorial-frame">
           <div className="editorial-frame__top-space" />
           <header className="rail">
-            <span className="rail__wordmark" style={{ fontSize: 15 }}>W3sPay</span>
+            <span className="rail__wordmark" style={{ fontSize: 15 }}>W3S Receipts</span>
             <span className="rail__eyebrow" style={{ color: "#f87171" }}>Crashed</span>
           </header>
           <div className="editorial-frame__body">

@@ -134,32 +134,25 @@ export type AppStage =
  * permission-denied callback render exactly the same body.
  */
 export const NEEDS_CAMERA_MESSAGE =
-  "W3SPay needs camera access to scan the receipt QR. Allow camera access for the Polkadot app and try again.";
+  "W3S Receipts needs camera access to scan the receipt QR. Allow camera access for the Polkadot app and try again.";
 
 /**
  * Pure: maps current async-state into the routing stage.
  *
- * Boot is held until ALL four host conditions are terminal — auth
- * (connected), host bridge (ready/timeout), camera (granted/denied),
- * balance (ready/error). Only then does it return `scanning`, giving the
- * customer one uninterrupted run through every permission modal before the
- * scanner mounts.
- *
- * `balanceResolved` is true once the payment-permission modal closed
- * (balance `"ready"` or `"error"`, regardless of read success). The query
- * is idle while the bridge polls, so `false` also holds boot during that
- * window.
+ * Boot is held until ALL three host conditions are terminal — auth
+ * (connected), host bridge (ready/timeout), camera (granted/denied). Only
+ * then does it return `scanning`, giving the customer one uninterrupted
+ * run through every permission modal before the scanner mounts.
  */
 export function computeRoutingStage(
   auth: HostAuthState,
   camera: CameraPermissionState,
   hostStatus: CoinPaymentHostStatus,
-  balanceResolved: boolean,
 ): AppStage {
   if (auth.kind === "outsideHost") {
     return {
       kind: "hostUnavailable",
-      message: "W3sPay lives inside the Polkadot app. Open it there to continue.",
+      message: "W3S Receipts lives inside the Polkadot app. Open it there to continue.",
     };
   }
   if (auth.kind === "error") {
@@ -174,7 +167,7 @@ export function computeRoutingStage(
       message:
         auth.reason.length > 0
           ? auth.reason
-          : "Open W3sPay through your Polkadot app to keep going.",
+          : "Open W3S Receipts through your Polkadot app to keep going.",
     };
   }
   if (auth.kind === "pending") return { kind: "boot" };
@@ -186,9 +179,11 @@ export function computeRoutingStage(
   if (hostStatus === "timeout") {
     return {
       kind: "hostUnavailable",
-      message: "Payment bridge isn't responding. Restart W3sPay and try again.",
+      message: "Payment bridge isn't responding. Restart W3S Receipts and try again.",
     };
   }
+  // Hold boot while the host bridge is still resolving.
+  if (hostStatus === "pending") return { kind: "boot" };
   // Camera gate: only `denied` needs a dedicated screen. `pending` means
   // the probe hasn't fired yet (camera permission is requested on the scan
   // page, not at boot), and `host-unavailable` means the probe is in
@@ -199,11 +194,6 @@ export function computeRoutingStage(
   if (camera.kind === "denied") {
     return { kind: "needsCamera", message: NEEDS_CAMERA_MESSAGE };
   }
-  // Balance / payment-permission gate. Block on boot until the payment
-  // modal has closed. The balance query is idle while the host bridge is
-  // still polling, so this also covers the `hostStatus === "pending"` case
-  // without a separate branch.
-  if (!balanceResolved) return { kind: "boot" };
   return { kind: "scanning" };
 }
 
@@ -261,7 +251,7 @@ export function derivePayErrorStage(
   if (authState.kind === "outsideHost" || authState.kind === "error") {
     return {
       kind: "hostUnavailable",
-      message: "Lost the host connection. Reopen W3sPay and try again.",
+      message: "Lost the host connection. Reopen W3S Receipts and try again.",
     };
   }
   const message = messageForPaymentError(caught);

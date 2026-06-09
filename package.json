@@ -28,7 +28,6 @@
     "@tanstack/react-router": "^1.170.11",
     "ethers": "^6.16.0",
     "polkadot-api": "^2.1.2",
-    "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

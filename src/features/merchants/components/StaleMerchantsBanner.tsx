@@ -18,7 +18,7 @@ export function staleMerchantsCopy(failed: boolean): StaleMerchantsCopy | null {
   if (!failed) return null;
   return {
     label: "Merchant directory unreachable.",
-    body: "Couldn't reach the merchant directory and no cached copy is available. Scans will land on 'not on W3sPay yet' until the directory loads.",
+    body: "Couldn't reach the merchant directory and no cached copy is available. Scans will land on 'not on W3S Receipts yet' until the directory loads.",
   };
 }
 

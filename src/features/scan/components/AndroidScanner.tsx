@@ -92,7 +92,7 @@ export function AndroidScanner({
           return;
         }
         handle = next;
-        journeyTracker.milestone("qr-scan", "scanner-ready");
+        journeyTracker.milestone("w3spay:qr-scan", "scanner-ready");
         setStage({ kind: "scanning" });
       } catch (caught) {
         if (cancelled) return;

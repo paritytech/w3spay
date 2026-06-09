@@ -38,10 +38,8 @@ export function resolveDestinationBytes(
 }
 
 /**
- * Resolve a `MerchantDestination` to a stable 32-byte AccountId32 hex
- * string. Used by the payment-history recorder so the on-disk `destination`
- * is uniform whether the entry was an `accountId32` or a `reviveContract`
- * H160 — what matters is where the money went.
+ * Resolve a `MerchantDestination` to a stable 32-byte AccountId32 hex string —
+ * uniform whether the entry was an `accountId32` or a `reviveContract` H160.
  */
 export function resolveDestinationHex(destination: MerchantDestination): string {
   return accountIdToHex(resolveDestinationBytes(destination));

@@ -21,9 +21,8 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import { captureError } from "@/telemetry";
 
 import { envConfig } from "@/config";
-import { resolveDestinationHex, type MerchantDestination } from "@/features/merchants/lib/destination.ts";
+import { type MerchantDestination } from "@/features/merchants/lib/destination.ts";
 import { useHostAuth } from "@/features/host/api/host-auth.ts";
-import type { PaymentHost } from "@/features/host/lib/payment-host.ts";
 import { getTerminalStore } from "@/features/host/lib/terminal-store.ts";
 import {
   merchantTableQueryOptions,
@@ -31,7 +30,6 @@ import {
   useMerchantTable,
 } from "@/features/merchants/api/queries.ts";
 import {
-  useAppendPayment,
   useSaveReceipt,
   useSendPayment,
 } from "@/features/payment/api/mutations.ts";
@@ -66,7 +64,6 @@ export interface PaymentActions {
     parsed: ParsedTseQr,
     merchant: MerchantEntry,
     tipCents: number,
-    host: PaymentHost,
   ): Promise<void>;
   /** Enter the dev-only manual-payment override. */
   startDevPay(): void;
@@ -74,7 +71,6 @@ export interface PaymentActions {
   performDevPayment(
     destinationHex: string,
     amountCents: number,
-    host: PaymentHost,
   ): Promise<void>;
   /** Navigate to a stage (flow stage → its route; gate stage → index). */
   goToStage(stage: AppStage): void;
@@ -84,7 +80,6 @@ export interface PaymentActions {
   performTerminalPayment(
     qr: ParsedTerminalPayQr,
     merchant: MerchantEntry | null,
-    host: PaymentHost,
   ): Promise<void>;
 }
 
@@ -97,7 +92,6 @@ export function usePaymentActions(): PaymentActions {
   const { source: merchantTableSource } = useMerchantTable();
 
   const sendPaymentMutation = useSendPayment();
-  const appendPaymentMutation = useAppendPayment();
   const saveReceiptMutation = useSaveReceipt();
 
   const {
@@ -146,8 +140,8 @@ export function usePaymentActions(): PaymentActions {
     // A `t3rminal-receipt` is its own happy path: persist locally and
     // confirm immediately, regardless of the current screen.
     if (result.kind === "receipt") {
-      journeyTracker.milestone("qr-scan", "qr-decoded");
-      journeyTracker.complete("qr-scan", { "scan.outcome": "receipt-saved" });
+      journeyTracker.milestone("w3spay:qr-scan", "qr-decoded");
+      journeyTracker.complete("w3spay:qr-scan", { "scan.outcome": "receipt-saved" });
       saveReceiptMutation.mutate({
         receipt: result.payload,
         savedAt: new Date().toISOString(),
@@ -190,8 +184,8 @@ export function usePaymentActions(): PaymentActions {
   // t3rminal-pay deeplink — look up the merchant by terminalId and route
   // to the confirm screen. No idempotency check (no transaction number).
   if (result.kind === "terminalPay") {
-    journeyTracker.milestone("qr-scan", "qr-decoded");
-    journeyTracker.complete("qr-scan", { "scan.outcome": "terminal-pay" });
+    journeyTracker.milestone("w3spay:qr-scan", "qr-decoded");
+    journeyTracker.complete("w3spay:qr-scan", { "scan.outcome": "terminal-pay" });
     setResolving(true);
     void (async () => {
       const origin = merchantDryRunOrigin(envConfig.chain.readOnlyOrigin);
@@ -210,8 +204,8 @@ export function usePaymentActions(): PaymentActions {
 
     // Valid TSE — the qr-scan happy path. The next transition is the
     // merchant-resolution path, a separate concern from the scan.
-    journeyTracker.milestone("qr-scan", "qr-decoded");
-    journeyTracker.complete("qr-scan", { "scan.outcome": "tse-valid" });
+    journeyTracker.milestone("w3spay:qr-scan", "qr-decoded");
+    journeyTracker.complete("w3spay:qr-scan", { "scan.outcome": "tse-valid" });
     const parsed = result.payload;
     const idempotencyKey = receiptIdempotencyKey(parsed);
 
@@ -264,10 +258,9 @@ export function usePaymentActions(): PaymentActions {
     parsed: ParsedTseQr,
     merchant: MerchantEntry,
     tipCents: number,
-    host: PaymentHost,
   ): Promise<void> => {
     const totalCents = parsed.amountCents + tipCents;
-    journeyTracker.start("customer-pay", {
+    journeyTracker.start("w3spay:customer-pay", {
       "payment.tipped": tipCents > 0,
       "payment.table_source": merchantTableSource ?? "unknown",
     });
@@ -276,7 +269,6 @@ export function usePaymentActions(): PaymentActions {
     let payment;
     try {
       payment = await sendPaymentMutation.mutateAsync({
-        host,
         amountCents: totalCents,
         merchantDestination: merchant.destination,
       });
@@ -284,15 +276,15 @@ export function usePaymentActions(): PaymentActions {
       // Classify + route on the freshest auth state so a sign-out
       // mid-payment lands on sign-in / host-unavailable, not a generic
       // payError.
-      journeyTracker.fail("customer-pay", categorizePayError(caught, authState), caught);
+      journeyTracker.fail("w3spay:customer-pay", categorizePayError(caught, authState), caught);
       navigateForStage(derivePayErrorStage(caught, authState, parsed, merchant, tipCents));
       return;
     }
 
-    journeyTracker.milestone("customer-pay", "payment-submitted");
+    journeyTracker.milestone("w3spay:customer-pay", "payment-submitted");
     // CRITICAL: navigate to `done` BEFORE any persistence. The host has
     // moved money; a local-write failure must never read back as payError.
-    journeyTracker.complete("customer-pay", {
+    journeyTracker.complete("w3spay:customer-pay", {
       "payment.settlement": payment.settlement === "unconfirmed" ? "unconfirmed" : "settled",
     });
     navigateForStage({ kind: "done", parsed, merchant, tipCents, payment });
@@ -310,20 +302,6 @@ export function usePaymentActions(): PaymentActions {
         captureError(caught, { subsystem: "idempotency", op: "write" });
       }
     })();
-    appendPaymentMutation.mutate({
-      paymentId: payment.paymentId,
-      destination: resolveDestinationHex(merchant.destination),
-      amountCents: totalCents,
-      tipCents,
-      paidAt: new Date().toISOString(),
-      status: payment.settlement === "unconfirmed" ? "unconfirmed" : "paid",
-      merchantDisplayName: merchant.displayName,
-      merchantId: merchant.merchantId,
-      terminalId: merchant.terminalId,
-      kassenSerial: parsed.kassenSerial,
-      transactionNumber: parsed.transactionNumber,
-      rawQrText: useSessionStore.getState().lastQrText ?? undefined,
-    });
   };
 
   const startDevPay = (): void => {
@@ -333,29 +311,27 @@ export function usePaymentActions(): PaymentActions {
   const performDevPayment = async (
     destinationHex: string,
     amountCents: number,
-    host: PaymentHost,
   ): Promise<void> => {
-    journeyTracker.start("dev-pay");
+    journeyTracker.start("w3spay:dev-pay");
     navigateForStage({ kind: "devPaying", amountCents, destinationHex });
 
     let payment;
     try {
       payment = await sendPaymentMutation.mutateAsync({
-        host,
         amountCents,
         merchantDestination: { kind: "accountId32", value: destinationHex },
       });
     } catch (caught) {
       const variant = classifyPaymentError(caught);
-      journeyTracker.fail("dev-pay", variant ? `coin-${variant}` : "unknown", caught);
+      journeyTracker.fail("w3spay:dev-pay", variant ? `coin-${variant}` : "unknown", caught);
       // Dev surface: show the real host reason, not the friendly copy.
       const message = messageFromError(caught, "Payment couldn't go through. Try again.");
       navigateForStage({ kind: "devPayError", message, amountCents, destinationHex });
       return;
     }
 
-    journeyTracker.milestone("dev-pay", "payment-submitted");
-    journeyTracker.complete("dev-pay", {
+    journeyTracker.milestone("w3spay:dev-pay", "payment-submitted");
+    journeyTracker.complete("w3spay:dev-pay", {
       "payment.settlement": payment.settlement === "unconfirmed" ? "unconfirmed" : "settled",
     });
     navigateForStage({
@@ -363,14 +339,6 @@ export function usePaymentActions(): PaymentActions {
       amountCents,
       destinationHex,
       paymentId: payment.paymentId,
-    });
-
-    appendPaymentMutation.mutate({
-      paymentId: payment.paymentId,
-      destination: destinationHex,
-      amountCents,
-      paidAt: new Date().toISOString(),
-      status: payment.settlement === "unconfirmed" ? "unconfirmed" : "paid",
     });
   };
 
@@ -382,14 +350,13 @@ export function usePaymentActions(): PaymentActions {
         : captured.kind === "invalid"
           ? "invalid"
           : "unsupported";
-    journeyTracker.fail("qr-scan", reason, undefined, { "scan.outcome": reason });
+    journeyTracker.fail("w3spay:qr-scan", reason, undefined, { "scan.outcome": reason });
     navigateForStage(stageOnGraceExpiry(captured));
   };
 
   const performTerminalPayment = async (
     qr: ParsedTerminalPayQr,
     merchant: MerchantEntry | null,
-    host: PaymentHost,
   ): Promise<void> => {
     navigateForStage({ kind: "terminalPayPaying", qr, merchant });
 
@@ -401,7 +368,6 @@ export function usePaymentActions(): PaymentActions {
     let payment;
     try {
       payment = await sendPaymentMutation.mutateAsync({
-        host,
         amountCents: qr.amountCents,
         merchantDestination: destination,
       });
@@ -412,19 +378,6 @@ export function usePaymentActions(): PaymentActions {
     }
 
     navigateForStage({ kind: "terminalPayDone", qr, merchant, payment });
-
-    // Record in local payment history (fire-and-forget).
-    appendPaymentMutation.mutate({
-      paymentId: payment.paymentId,
-      destination: resolveDestinationHex(destination),
-      amountCents: qr.amountCents,
-      paidAt: new Date().toISOString(),
-      status: payment.settlement === "unconfirmed" ? "unconfirmed" : "paid",
-      merchantDisplayName: merchant?.displayName ?? qr.terminalId,
-      merchantId: merchant?.merchantId,
-      terminalId: qr.terminalId,
-      rawQrText: useSessionStore.getState().lastQrText ?? undefined,
-    });
   };
 
 
@@ -443,15 +396,15 @@ export function usePaymentActions(): PaymentActions {
     () => ({
       handleDecoded: (raw) => implRef.current.handleDecoded(raw),
       startScan: () => implRef.current.startScan(),
-      performPayment: (parsed, merchant, tipCents, host) =>
-        implRef.current.performPayment(parsed, merchant, tipCents, host),
+      performPayment: (parsed, merchant, tipCents) =>
+        implRef.current.performPayment(parsed, merchant, tipCents),
       startDevPay: () => implRef.current.startDevPay(),
-      performDevPayment: (destinationHex, amountCents, host) =>
-        implRef.current.performDevPayment(destinationHex, amountCents, host),
+      performDevPayment: (destinationHex, amountCents) =>
+        implRef.current.performDevPayment(destinationHex, amountCents),
       goToStage: (stage) => implRef.current.goToStage(stage),
       flushScanGrace: () => implRef.current.flushScanGrace(),
-      performTerminalPayment: (qr, merchant, host) =>
-        implRef.current.performTerminalPayment(qr, merchant, host),
+      performTerminalPayment: (qr, merchant) =>
+        implRef.current.performTerminalPayment(qr, merchant),
     }),
     [],
   );

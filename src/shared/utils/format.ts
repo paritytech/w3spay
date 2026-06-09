@@ -25,3 +25,13 @@ export function shortHex(hex: string, head = 6, tail = 4): string {
   if (hex.length <= head + tail + 1) return hex;
   return `${hex.slice(0, head)}…${hex.slice(-tail)}`;
 }
+
+/** Format an ISO timestamp into compact `{ date: "9 Jun", time: "21:33" }` parts. */
+export function formatHistoryDate(iso: string): { date: string; time: string } {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: "—", time: "—" };
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const date = `${d.getDate()} ${months[d.getMonth()]}`;
+  const time = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  return { date, time };
+}

@@ -9,8 +9,8 @@ if (!domain) {
 
 export default defineConfig({
   domain,
-  displayName: "W3SPay",
-  description: "Payment app for Web3 Summit",
+  displayName: "W3S Receipts",
+  description: "Receipts app for Web3 Summit",
   icon: { path: "./icon.png", format: "png" },
   executables: [
     {

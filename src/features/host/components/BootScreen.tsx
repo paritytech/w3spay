@@ -14,7 +14,7 @@ export function BootScreen() {
       <div className="boot">
         <Mark size={56} />
         <div>
-          <div className="boot__wordmark">W3sPay</div>
+          <div className="boot__wordmark">W3S Receipts</div>
           <div className="boot__tagline">by Polkadot.</div>
         </div>
       </div>

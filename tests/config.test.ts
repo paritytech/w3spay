@@ -11,29 +11,14 @@ import { envConfig } from "@/config";
  */
 describe("envConfig", () => {
   it("locks token identity", () => {
-    expect(envConfig.token.name).toBe("CASH");
     expect(envConfig.token.symbol).toBe("CASH");
-    expect(envConfig.token.decimals).toBe(6);
-    expect(envConfig.token.displayDecimals).toBe(2);
-    // Derived: 10^(decimals - displayDecimals) = 10_000 for CASH.
+    // Derived from CASH wire decimals (6) and cent display precision (2).
     expect(envConfig.token.plancksPerCent).toBe(10_000);
   });
 
-  it("locks payment-history envelope", () => {
-    expect(envConfig.storage.paymentHistoryKey).toBe("w3spay:payment-history:v2");
-    expect(envConfig.storage.paymentHistorySchemaVersion).toBe(4);
-    expect(envConfig.storage.paymentHistoryMaxEntries).toBe(100);
-  });
-
-  it("locks payment-threshold defaults", () => {
-    expect(envConfig.payment.minSpendableCents).toBe(100);
+  it("locks the dev seed balance", () => {
     // 10_000_000_000 plancks ≈ 10_000 CASH (10⁶ plancks per token).
     expect(envConfig.payment.devStartingBalancePlancks).toBe(10_000_000_000);
-    // Dummy fallback must clear the spend threshold by a comfortable margin
-    // so the demo flow actually advances past the confirm screen.
-    expect(envConfig.payment.dummyBalanceCents).toBeGreaterThan(
-      envConfig.payment.minSpendableCents,
-    );
   });
 
   it("locks host wait policy", () => {

@@ -25,7 +25,6 @@ import {
 import type { HostAuthState } from "@/features/host/api/host-auth.ts";
 import type { MerchantEntry, MerchantTable } from "@/features/merchants/types.ts";
 import type { ParsedTseQr } from "@/features/scan/lib/tse-parser.ts";
-import type { PaymentHost } from "@/features/host/lib/payment-host.ts";
 
 const PARSED: ParsedTseQr = {
   amountCents: 1234,
@@ -218,11 +217,11 @@ describe("resolveMerchantStageAfterLoad", () => {
 });
 
 describe("unknownMerchantCopy", () => {
-  it("returns the generic 'not on W3sPay yet' copy regardless of registry health", () => {
+  it("returns the generic 'not on W3S Receipts yet' copy regardless of registry health", () => {
     const copy = unknownMerchantCopy();
     expect(copy.eyebrow).toBe("Not yet");
     expect(copy.headLead).toBe("This place isn't");
-    expect(copy.headSuffix).toBe("on W3sPay yet.");
+    expect(copy.headSuffix).toBe("on W3S Receipts yet.");
     expect(copy.sub.toLowerCase()).toContain("pilot");
   });
 });
@@ -242,25 +241,23 @@ describe("staleMerchantsCopy", () => {
 
 
 describe("coinPaymentHostStatus", () => {
-  const dummyHost = { paymentBalance: async () => ({ available: 0 }), paymentRequest: async () => ({ id: "x" }) } as PaymentHost;
-
   it("is `ready` as soon as the bridge resolves, regardless of elapsed time", () => {
-    expect(coinPaymentHostStatus(dummyHost, 0, 3_000)).toBe("ready");
-    expect(coinPaymentHostStatus(dummyHost, 9_999, 3_000)).toBe("ready");
+    expect(coinPaymentHostStatus(true, 0, 3_000)).toBe("ready");
+    expect(coinPaymentHostStatus(true, 9_999, 3_000)).toBe("ready");
   });
 
-  it("stays `pending` while the bridge is null and the timeout hasn't elapsed", () => {
-    expect(coinPaymentHostStatus(null, 100, 3_000)).toBe("pending");
-    expect(coinPaymentHostStatus(null, 2_999, 3_000)).toBe("pending");
+  it("stays `pending` while the bridge isn't ready and the timeout hasn't elapsed", () => {
+    expect(coinPaymentHostStatus(false, 100, 3_000)).toBe("pending");
+    expect(coinPaymentHostStatus(false, 2_999, 3_000)).toBe("pending");
   });
 
   it("flips to `timeout` once elapsed crosses the configured timeout with no bridge", () => {
-    expect(coinPaymentHostStatus(null, 3_000, 3_000)).toBe("timeout");
-    expect(coinPaymentHostStatus(null, 9_999, 3_000)).toBe("timeout");
+    expect(coinPaymentHostStatus(false, 3_000, 3_000)).toBe("timeout");
+    expect(coinPaymentHostStatus(false, 9_999, 3_000)).toBe("timeout");
   });
 
   it("treats a non-positive timeout as immediate-timeout (total function, no edge case)", () => {
-    expect(coinPaymentHostStatus(null, 0, 0)).toBe("timeout");
-    expect(coinPaymentHostStatus(null, 0, -1)).toBe("timeout");
+    expect(coinPaymentHostStatus(false, 0, 0)).toBe("timeout");
+    expect(coinPaymentHostStatus(false, 0, -1)).toBe("timeout");
   });
 });

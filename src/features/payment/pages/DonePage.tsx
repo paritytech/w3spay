@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // @paritytech
 
-/** Settled-payment page — confirms the transfer, with acknowledge (back to scan) and a wallet-activity shortcut. */
+/** Settled-payment page — confirms the transfer, with acknowledge (back to scan) and a wallet shortcut. */
 
 import { useNavigate } from "@tanstack/react-router";
 
@@ -25,7 +25,7 @@ export function DonePage() {
       paymentId={payment.paymentId}
       settlement={payment.settlement}
       onAcknowledge={actions.startScan}
-      onOpenWallet={() => void navigate({ to: PATHS.wallet, search: { tab: "activity" } })}
+      onOpenWallet={() => void navigate({ to: PATHS.wallet })}
     />
   );
 }

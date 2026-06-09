@@ -7,8 +7,6 @@
  */
 
 export const walletKeys = {
-  /** Local KvStore payment history mirror (Activity tab). */
-  paymentHistory: () => ["payment-history"] as const,
   /** Local KvStore saved-receipts list (Receipts tab). */
   receipts: () => ["receipts"] as const,
   /** Rendered SVG for a raw receipt QR payload. */

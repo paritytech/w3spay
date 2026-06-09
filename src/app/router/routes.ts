@@ -17,6 +17,7 @@ export const PATHS = {
   done: "/done",
   alreadyPaid: "/already-paid",
   receiptSaved: "/receipt-saved",
+  saveReceipt: "/save-receipt",
 
   unsupported: "/unsupported",
   scanError: "/scan-error",
@@ -30,7 +31,6 @@ export const PATHS = {
   devPayError: "/dev-pay-error",
 
   wallet: "/wallet",
-  paymentDetail: "/wallet/payment/$paymentId",
   receiptDetail: "/wallet/receipt/$saleId",
 
   terminalPayConfirm: "/terminal-pay/confirm",

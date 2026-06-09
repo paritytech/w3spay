@@ -46,13 +46,11 @@ export type ClientTransportMode = "auto" | "ws";
 export function getOrCreateClient(
   genesis: `0x${string}`,
   wsFallback: string,
-  inHost: HostEnvironmentPredicate,
-  transport: ClientTransportMode = "auto",
 ): PolkadotClient {
   let client = clientCache.get(genesis);
   if (!client) {
     const ws = getWsProvider(wsFallback);
-    const provider = transport === "auto" && inHost() ? createPapiProvider(genesis, ws) : ws;
+    const provider =  createPapiProvider(genesis, ws);
     client = createClient(provider);
     clientCache.set(genesis, client);
   }

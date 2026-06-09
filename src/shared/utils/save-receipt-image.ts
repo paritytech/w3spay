@@ -11,9 +11,8 @@
 
 import type { ReceiptRecord } from "@/features/wallet/api/receipts.ts";
 import { itemLineTotalCents } from "@/features/wallet/api/receipts.ts";
-import { formatHistoryDate } from "@/features/wallet/api/payment-history.ts";
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
-import { shortHex, splitDisplayName } from "@/shared/utils/format.ts";
+import { formatHistoryDate, shortHex, splitDisplayName } from "@/shared/utils/format.ts";
 
 const LW = 600;       // logical canvas width (px)
 const PAD = 36;       // outer padding

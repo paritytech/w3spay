@@ -37,20 +37,20 @@ export function TelemetryTestScreen() {
 
   const testSuccessJourney = () => {
     // Use customer-pay so the dashboard's saved search picks it up.
-    journeyTracker.start("customer-pay", { "payment.tipped": false });
-    setTimeout(() => journeyTracker.milestone("customer-pay", "payment-submitted"), 100);
+    journeyTracker.start("w3spay:customer-pay", { "payment.tipped": false });
+    setTimeout(() => journeyTracker.milestone("w3spay:customer-pay", "payment-submitted"), 100);
     setTimeout(() => {
-      journeyTracker.complete("customer-pay", { "payment.settlement": "settled" });
+      journeyTracker.complete("w3spay:customer-pay", { "payment.settlement": "settled" });
       appendLog("customer-pay completed");
     }, 250);
     appendLog("customer-pay started");
   };
 
   const testFailedJourney = () => {
-    journeyTracker.start("customer-pay", { "payment.tipped": true });
-    setTimeout(() => journeyTracker.milestone("customer-pay", "payment-submitted"), 100);
+    journeyTracker.start("w3spay:customer-pay", { "payment.tipped": true });
+    setTimeout(() => journeyTracker.milestone("w3spay:customer-pay", "payment-submitted"), 100);
     setTimeout(() => {
-      journeyTracker.fail("customer-pay", "balance-low");
+      journeyTracker.fail("w3spay:customer-pay", "balance-low");
       appendLog("customer-pay failed (balance-low)");
     }, 250);
     appendLog("customer-pay started (will fail)");
@@ -58,15 +58,15 @@ export function TelemetryTestScreen() {
 
   const testPrivacyRegression = () => {
     // Start a journey so `addAttributes` has a span to attach to.
-    journeyTracker.start("customer-pay");
+    journeyTracker.start("w3spay:customer-pay");
     // `destination` matches SENSITIVE_KEY_RE → the guard refuses the write,
     // logs an error, and drops the attribute; the journey continues so a
     // telemetry mistake never blocks the app.
-    journeyTracker.addAttributes("customer-pay", {
+    journeyTracker.addAttributes("w3spay:customer-pay", {
       destination: "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
     });
     appendLog("privacy guard: refusal logged to console (attribute dropped)");
-    journeyTracker.complete("customer-pay", { "payment.settlement": "settled" });
+    journeyTracker.complete("w3spay:customer-pay", { "payment.settlement": "settled" });
   };
 
   const flushQueue = async () => {
@@ -79,7 +79,7 @@ export function TelemetryTestScreen() {
     <section className="workspace">
       <section className="editorial-frame" style={{ padding: "16px 24px" }}>
         <header className="rail">
-          <span className="rail__wordmark" style={{ fontSize: 15 }}>W3sPay</span>
+          <span className="rail__wordmark" style={{ fontSize: 15 }}>W3S Receipts</span>
           <span className="rail__eyebrow">Telemetry test</span>
         </header>
         <p style={{ marginTop: 16, fontSize: 13, lineHeight: 1.5 }}>

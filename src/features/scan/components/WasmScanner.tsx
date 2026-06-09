@@ -110,7 +110,7 @@ export function WasmScanner({
           }
           handle = next;
           // Telemetry: records scanning-stage entry → first usable frame.
-          journeyTracker.milestone("qr-scan", "scanner-ready");
+          journeyTracker.milestone("w3spay:qr-scan", "scanner-ready");
           setStage({ kind: "scanning" });
           return;
         } catch (caught) {

@@ -17,7 +17,6 @@ import {
   SecondaryButton,
   Step,
 } from "@/shared/components/primitives.tsx";
-import { Spinner } from "@/shared/components/Spinner.tsx";
 import { ASSET_LABEL, splitDisplayName } from "@/shared/utils/format.ts";
 
 export interface TerminalPayConfirmScreenProps {
@@ -27,10 +26,6 @@ export interface TerminalPayConfirmScreenProps {
   terminalId: string;
   /** Destination display string — registry address value or qr.addressSs58. */
   destinationDisplay: string;
-  /** Vault spendable balance in cents, or null while recovering. */
-  availableBalanceCents: number | null;
-  /** True when balance is known AND strictly less than the amount. */
-  insufficient: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -44,27 +39,20 @@ export function TerminalPayConfirmScreen({
   qr,
   merchantDisplayName,
   terminalId,
-  availableBalanceCents,
-  insufficient,
   onConfirm,
   onCancel,
 }: TerminalPayConfirmScreenProps) {
   const total = formatAmountCents(qr.amountCents);
   const { name, venue } = splitDisplayName(merchantDisplayName);
-  const balanceLoading = availableBalanceCents === null;
-  const payDisabled = balanceLoading || insufficient;
-  const remainingCents =
-    availableBalanceCents !== null ? availableBalanceCents - qr.amountCents : null;
   const shortId = truncateId(terminalId);
-
 
   return (
     <Frame
       footer={
         <div className="btn-row">
           <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
-          <PrimaryButton onClick={onConfirm} disabled={payDisabled}>
-            {insufficient ? "Not enough balance" : `Pay ${total} ${ASSET_LABEL}`}
+          <PrimaryButton onClick={onConfirm}>
+            Pay {total} {ASSET_LABEL}
           </PrimaryButton>
         </div>
       }
@@ -98,42 +86,6 @@ export function TerminalPayConfirmScreen({
         <div className="amount-cluster__amount">
           {total} <span className="amount-cluster__ticker">{ASSET_LABEL}</span>
         </div>
-      </div>
-
-      <Dotted style={{ marginBottom: 4 }} />
-
-      <div className="balance-row">
-        <span
-          className={
-            insufficient
-              ? "balance-row__label balance-row__label--warn"
-              : "balance-row__label"
-          }
-        >
-          {balanceLoading
-            ? "Checking balance…"
-            : insufficient
-              ? "Below total"
-              : "Balance after"}
-        </span>
-        <span>
-          {balanceLoading ? (
-            <Spinner size={14} />
-          ) : (
-            <span
-              className={
-                insufficient
-                  ? "balance-row__value balance-row__value--warn"
-                  : "balance-row__value"
-              }
-            >
-              {formatAmountCents(
-                insufficient ? (availableBalanceCents ?? 0) : (remainingCents ?? 0),
-              )}{" "}
-              {ASSET_LABEL}
-            </span>
-          )}
-        </span>
       </div>
 
       <Dotted style={{ marginTop: 4, marginBottom: 4 }} />

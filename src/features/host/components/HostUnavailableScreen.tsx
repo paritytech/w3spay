@@ -24,7 +24,7 @@ export function HostUnavailableScreen({ message }: HostUnavailableScreenProps) {
       <Dotted style={{ marginTop: 22 }} />
       <Sub>
         {message ??
-          "W3sPay lives inside the Polkadot app. Open it there to keep going."}
+          "W3S Receipts lives inside the Polkadot app. Open it there to keep going."}
       </Sub>
       <div style={{ flex: 1 }} />
       <Dotted />

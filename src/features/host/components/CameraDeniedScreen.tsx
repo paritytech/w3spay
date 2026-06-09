@@ -40,7 +40,7 @@ export function CameraDeniedScreen({ onRetry, message }: CameraDeniedScreenProps
       <Dotted style={{ marginTop: 22 }} />
       <Sub>
         {message ??
-          "W3sPay reads codes off paper receipts — that's the whole product. Allow camera access and come back."}
+          "W3S Receipts reads codes off paper receipts — that's the whole product. Allow camera access and come back."}
       </Sub>
       <div style={{ flex: 1 }} />
       <div style={{ paddingBottom: 18, color: "var(--color-text-faint)", fontSize: 12, lineHeight: 1.6 }}>

@@ -35,11 +35,11 @@ export interface DoneScreenProps {
   /**
    * Host-reported settlement outcome. `settled` → terminal `completed`
    * observed ("Paid"); `unconfirmed` → accepted but the settlement sub was
-   * interrupted ("Submitted"; user reconciles via Activity).
+   * interrupted ("Submitted").
    */
   settlement: "settled" | "unconfirmed";
   onAcknowledge: () => void;
-  /** Open the wallet overlay (defaults to the Activity tab in the caller). */
+  /** Open the wallet overlay (saved receipts). */
   onOpenWallet?: () => void;
 }
 
@@ -92,11 +92,11 @@ export function DoneScreen({
             }}
           >
             {isUnconfirmed
-              ? "settlement pending — check Activity to reconcile."
+              ? "settlement pending."
               : "show this to the cashier."}
           </div>
         </div>
-        {onOpenWallet ? <IconButton onClick={onOpenWallet} label="Activity" icon="history" /> : null}
+        {onOpenWallet ? <IconButton onClick={onOpenWallet} label="Receipts" icon="history" /> : null}
       </header>
 
       <Dotted style={{ marginTop: 18 }} />

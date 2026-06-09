@@ -10,10 +10,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: "./",
-  plugins: [react(), sentryVitePlugin({
-    org: "paritytech",
-    project: "w3spay"
-  })],
+  plugins: [
+    react(),
+    ...(process.env.VITE_W3SPAY_SENTRY_ENABLED === "true"
+      ? [sentryVitePlugin({ org: "paritytech", project: "w3spay", telemetry: false })]
+      : []),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(here, "src"),

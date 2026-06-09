@@ -9,6 +9,4 @@
 export const hostKeys = {
   /** Host payment-surface resolution poll. */
   coinPaymentHost: () => ["coin-payment-host"] as const,
-  /** Spendable vault balance, in cents. Invalidated after every payment. */
-  paymentBalance: () => ["payment-balance"] as const,
 } as const;

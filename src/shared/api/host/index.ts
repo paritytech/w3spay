@@ -11,7 +11,6 @@
  *   - `./host-api`             — single facade over the Host API wrapper
  *   - `./host-tx-signer`       — host-mode signer (handles custom signed
  *                                extensions like AsPgas)
- *   - `./standalone-tx-signer` — browser-extension-mode signer
  *   - `./wallet`               — auto-initing React store: connection state,
  *                                product account, signer
  *   - `./debug`                — toolbox-button debug overlay for mobile hosts
@@ -21,7 +20,6 @@ export * from "./networks.ts";
 export * from "./connection.ts";
 export * from "./client.ts";
 export * from "./host-tx-signer.ts";
-export * from "./standalone-tx-signer.ts";
 export * from "./host-api.ts";
 export * from "./wallet.ts";
 export * from "./permissions.ts";

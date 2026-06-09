@@ -78,12 +78,12 @@ export function TerminalPayDoneScreen({
             }}
           >
             {isUnconfirmed
-              ? "settlement pending — check Activity to reconcile."
+              ? "settlement pending."
               : "show this to the cashier."}
           </div>
         </div>
         {onOpenWallet ? (
-          <IconButton onClick={onOpenWallet} label="Activity" icon="history" />
+          <IconButton onClick={onOpenWallet} label="Receipts" icon="history" />
         ) : null}
       </header>
 

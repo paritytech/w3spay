@@ -15,7 +15,7 @@ export function SignInScreen() {
    
       <Eyebrow>Almost there</Eyebrow>
       <div style={{ marginTop: 16 }}>
-        <Head size={44} suffix="W3sPay.">
+        <Head size={44} suffix="W3S Receipts.">
           Welcome to
         </Head>
       </div>

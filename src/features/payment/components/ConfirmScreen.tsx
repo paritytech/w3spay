@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // @paritytech
 
-/**
- * Pre-pay review screen. The Pay button gates only on known-insufficient
- * balance — a null balance (still recovering) is fail-open and lets the
- * WASM coin-selection raise the structured error.
- */
+/** Pre-pay review screen. */
 
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
 import type { ParsedTseQr } from "@/features/scan/lib/tse-parser.ts";
@@ -19,7 +15,6 @@ import {
   SecondaryButton,
   Step,
 } from "@/shared/components/primitives.tsx";
-import { Spinner } from "@/shared/components/Spinner.tsx";
 import {
   ASSET_LABEL,
   splitDisplayName,
@@ -35,10 +30,6 @@ export interface ConfirmScreenProps {
   tipCents: number;
   /** Display string for the resolved destination (hex). */
   destinationDisplay: string;
-  /** Vault's spendable balance in cents, or null while recovering. */
-  availableBalanceCents: number | null;
-  /** True when balance is known AND strictly less than the total to pay. */
-  insufficient: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -48,8 +39,6 @@ export function ConfirmScreen({
   terminalId,
   parsed,
   tipCents,
-  availableBalanceCents,
-  insufficient,
   onConfirm,
   onCancel,
 }: ConfirmScreenProps) {
@@ -59,9 +48,6 @@ export function ConfirmScreen({
   const tipDisplay = formatAmountCents(tipCents);
   const total = formatAmountCents(totalCents);
   const { name, venue } = splitDisplayName(merchantDisplayName);
-  const balanceLoading = availableBalanceCents === null;
-  const payDisabled = balanceLoading || insufficient;
-  const remainingCents = availableBalanceCents !== null ? availableBalanceCents - totalCents : null;
   const hasTip = tipCents > 0;
   const tipPercent = hasTip ? Math.round((tipCents / Math.max(subtotalCents, 1)) * 100) : 0;
 
@@ -70,8 +56,8 @@ export function ConfirmScreen({
       footer={
         <div className="btn-row">
           <SecondaryButton onClick={onCancel}>Cancel</SecondaryButton>
-          <PrimaryButton onClick={onConfirm} disabled={payDisabled}>
-            {insufficient ? "Not enough balance" : `Pay ${total} ${ASSET_LABEL}`}
+          <PrimaryButton onClick={onConfirm}>
+            Pay {total} {ASSET_LABEL}
           </PrimaryButton>
         </div>
       }
@@ -101,23 +87,6 @@ export function ConfirmScreen({
             <span className="amount-cluster__breakdown-pct"> · {tipPercent}%</span>
           </p>
         ) : null}
-      </div>
-
-      <Dotted style={{ marginBottom: 4 }} />
-
-      <div className="balance-row">
-        <span className={insufficient ? "balance-row__label balance-row__label--warn" : "balance-row__label"}>
-          {balanceLoading ? "Checking balance…" : insufficient ? "Below total" : "Balance after"}
-        </span>
-        <span>
-          {balanceLoading ? (
-            <Spinner size={14} />
-          ) : (
-            <span className={insufficient ? "balance-row__value balance-row__value--warn" : "balance-row__value"}>
-              {formatAmountCents(insufficient ? availableBalanceCents ?? 0 : remainingCents ?? 0)} {ASSET_LABEL}
-            </span>
-          )}
-        </span>
       </div>
 
       <Dotted style={{ marginTop: 4, marginBottom: 4 }} />

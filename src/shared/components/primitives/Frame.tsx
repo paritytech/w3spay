@@ -41,7 +41,7 @@ export function Rail() {
     <header className="rail">
       <div className="rail__brand">
         <Mark size={16} />
-        <span className="rail__wordmark">W3sPay</span>
+        <span className="rail__wordmark">W3S Receipts</span>
       </div>
       <span className="rail__eyebrow">Web3 · Berlin · pilot</span>
     </header>

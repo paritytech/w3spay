@@ -3,10 +3,9 @@
 
 /**
  * Local saved-receipts store — KvStore-backed list of every `t3rminal-receipt`
- * QR scanned and saved on this device. Read by `WalletScreen` (Receipts tab),
- * written by `stage-context.tsx#handleDecoded`. A record-keeping artifact
- * independent of the crypto payment flow; mirrors `payment-history.ts`'s
- * envelope shape:
+ * QR scanned and saved on this device. Read by `WalletScreen`, written by the
+ * scan flow when a receipt deeplink is saved. A record-keeping artifact
+ * independent of the crypto payment flow. Storage envelope:
  *
  *   key:   `RECEIPTS_KEY` (currently "w3spay:receipts:v1")
  *   value: JSON.stringify({ schemaVersion, entries: ReceiptRecord[] })

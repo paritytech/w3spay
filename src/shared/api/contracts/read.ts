@@ -17,8 +17,6 @@ import { Binary, type PolkadotClient } from "polkadot-api";
 
 import type { ReviveApiShim, ReviveCallDryRun } from "./types.ts";
 
-export type { ReviveCallDryRun, WeightV2 } from "./types.ts";
-
 export interface ReadContractOptions {
   readonly address: `0x${string}`;
   readonly abi: Abi;
@@ -36,10 +34,9 @@ export interface ReadContractOptions {
 
 /**
  * Cast `unsafeApi.apis.ReviveApi` to the narrow shim — PAPI v2 types runtime
- * APIs as `unknown` via `getUnsafeApi()`. Exported because `multicall.ts`
- * and `account-mapping.ts` need the same surface.
+ * APIs as `unknown` via `getUnsafeApi()`. Internal to the read path.
  */
-export function reviveApi(unsafeApi: unknown): ReviveApiShim {
+function reviveApi(unsafeApi: unknown): ReviveApiShim {
   return (unsafeApi as { apis: { ReviveApi: ReviveApiShim } }).apis.ReviveApi;
 }
 
@@ -47,7 +44,7 @@ export function reviveApi(unsafeApi: unknown): ReviveApiShim {
  * Render a dry-run error value as a stable string. Handles bigint payloads
  * (`JSON.stringify` throws on bare bigints); falls back to `String(value)`.
  */
-export function stringifyResultValue(value: unknown): string {
+function stringifyResultValue(value: unknown): string {
   try {
     return JSON.stringify(value, (_key, v) => (typeof v === "bigint" ? v.toString() : v));
   } catch {

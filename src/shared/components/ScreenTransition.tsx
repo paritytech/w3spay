@@ -17,7 +17,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-const TRANSITION_MS = 280;
+const TRANSITION_MS = 200;
 
 interface ScreenSlot {
   readonly key: string;

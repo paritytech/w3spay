@@ -8,6 +8,7 @@
  * Format-sniff rules (§6.4):
  *   - "V0;"               → BSI TR-03151 / KassenSichV §6 TSE QR (Branch A)
  *   - "polkadotapp://pay" → polkadot-pay deeplink (parsed here)
+ *   - "polkadotapp://…/#/save-receipt" → save-receipt deeplink (parsed here)
  *   - "polkadot:"         → SS58 URI scheme (not handled)
  *   - leading "{"         → JSON object. `type: "t3rminal-receipt"` is a
  *                          scanned purchase receipt (parsed here); any
@@ -23,6 +24,8 @@ import {
 } from "@/features/scan/lib/terminal-pay-parser.ts";
 import {
   parseReceipt,
+  isSaveReceiptUrl,
+  parseSaveReceiptUrl,
   ReceiptParseError,
   RECEIPT_QR_TYPE,
   type ParsedReceipt,
@@ -52,6 +55,16 @@ export function dispatchScannedPayload(raw: string): ScanResult {
     } catch (caught) {
       if (caught instanceof TseParseError) {
         return { kind: "invalid", error: caught, raw };
+      }
+      throw caught;
+    }
+  }
+  if (isSaveReceiptUrl(raw)) {
+    try {
+      return { kind: "receipt", payload: parseSaveReceiptUrl(raw) };
+    } catch (caught) {
+      if (caught instanceof ReceiptParseError) {
+        return { kind: "receiptInvalid", error: caught, raw };
       }
       throw caught;
     }

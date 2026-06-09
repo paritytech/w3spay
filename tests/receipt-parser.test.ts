@@ -256,8 +256,19 @@ describe("parseDecimalToCents", () => {
     expect(parseDecimalToCents("0.00")).toBe(0);
   });
 
-  it("rejects more than two fractional digits", () => {
-    expect(() => parseDecimalToCents("1.234")).toThrow(ReceiptParseError);
+  it("rounds sub-cent precision (t3rminal pUSD amounts) to the nearest cent", () => {
+    // t3rminal formats money from 6-decimal pUSD planck, so QR amounts carry
+    // up to six fractional digits ("5.123456"). Receipts display whole cents
+    // (the printed paper total does too), so the parser rounds half-up.
+    expect(parseDecimalToCents("5.123456")).toBe(512);
+    expect(parseDecimalToCents("16.666666")).toBe(1667);
+    expect(parseDecimalToCents("1.234")).toBe(123);
+    expect(parseDecimalToCents("1.235")).toBe(124);
+    expect(parseDecimalToCents("9.999")).toBe(1000);
+  });
+
+  it("still rejects a non-digit character in the fractional part", () => {
+    expect(() => parseDecimalToCents("1.2x")).toThrow(ReceiptParseError);
   });
 
   it("rejects non-digit characters", () => {
@@ -389,5 +400,18 @@ describe("real-world t3rminal-receipt payloads", () => {
     expect(r.items).toEqual([]);
     expect(r.business.name).toBe("Krusty Krab Pizza");
     expect(r.merchantAddress).toBe("5DfXxr1Npfj42NDof2SFvMZ9DAWifjgA5NHTdb3FtjYpj7hr");
+  });
+
+  it("parses an itemized receipt whose pUSD amounts carry sub-cent precision", () => {
+    // A dense, itemized t3rminal receipt: `formatAmountFromPlanck` (6-decimal
+    // pUSD) emits up to six fractional digits — e.g. "16.666666". The strict
+    // ≤2-decimal parser used to reject these as `malformedAmount` /
+    // `malformedItems`, dead-ending the scan on "Couldn't read that receipt".
+    const raw = `{"v":1,"type":"t3rminal-receipt","saleId":"01KT9P4M2QF8RA6N0V3K7E5XYZ","amount":"16.666666","asset":"CASH","currency":"CASH","taxRate":19,"business":{"name":"Funkhaus Berlin Events GmbH","addressLine1":"Nalepastraße 18","addressLine2":"12459 Berlin","phone":"030/12085416"},"items":[{"name":"Filterkaffee","quantity":3,"unitPrice":"2.333333"},{"name":"Mehrkornbrötchen","quantity":2,"unitPrice":"4.833334"}],"issuedAt":"2026-06-10T09:14:32.012Z","blockHash":"0x1c9d4bc02143a0d081cdc47a0aa9375e20687567ddfd56ea427bfe6f231cfeeb","blockNumber":1071340,"merchantAddress":"5DfXxr1Npfj42NDof2SFvMZ9DAWifjgA5NHTdb3FtjYpj7hr"}`;
+    const r = parseReceiptQr(raw);
+    expect(r.amountCents).toBe(1667);
+    expect(r.items.map((i) => i.unitPriceCents)).toEqual([233, 483]);
+    // The full scan path resolves to a savable receipt, not `receiptInvalid`.
+    expect(dispatchScannedPayload(raw).kind).toBe("receipt");
   });
 });

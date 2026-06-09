@@ -21,7 +21,7 @@ export function UnsupportedPlatformScreen() {
       </div>
       <Dotted style={{ marginTop: 22 }} />
       <Sub>
-        W3sPay is not supported on this platform at the moment. Open the
+        W3S Receipts is not supported on this platform at the moment. Open the
         Polkadot Mobile app on your phone to continue.
       </Sub>
       <div style={{ flex: 1 }} />

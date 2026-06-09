@@ -6,8 +6,8 @@
  * amount as CASH cents.
  *
  * Cents are 1/100 of the token by design — independent of `TOKEN_DECIMALS`
- * (the on-chain plancks unit). Cents↔plancks conversion happens at the
- * `PaymentHost` boundary; everything downstream is cents.
+ * (the on-chain plancks unit). Cents↔plancks conversion happens inside
+ * `sendPayment`; everything downstream is cents.
  */
 
 /**

@@ -15,16 +15,22 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 
-import { devPayRoutes, paymentRoutes, scanRoute } from "@/features/payment/routes.tsx";
+import { devPayRoutes, paymentRoutes, saveReceiptRoute, scanRoute } from "@/features/payment/routes.tsx";
 import { rootRoute } from "@/app/router/root.tsx";
 import { walletRoutes } from "@/features/wallet/routes.tsx";
+import { consumeSaveReceiptDeepLink } from "@/features/scan/lib/save-receipt-deeplink.ts";
 
 const routeTree = rootRoute.addChildren([
   scanRoute,
+  saveReceiptRoute,
   ...paymentRoutes,
   ...devPayRoutes,
   ...walletRoutes,
 ]);
+
+// Ordering: seed the receipt-saved flow + rewrite the hash before the hash
+// history below reads the initial location.
+consumeSaveReceiptDeepLink();
 
 const router = createRouter({
   routeTree,

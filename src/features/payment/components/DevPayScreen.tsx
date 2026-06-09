@@ -33,8 +33,6 @@ import { ASSET_LABEL } from "@/shared/utils/format.ts";
 
 
 export interface DevPayScreenProps {
-  /** Vault's available balance in cents, or `null` while recovering. */
-  availableBalanceCents: number | null;
   /** Commit a dev payment. The caller has already validated both fields. */
   onPay: (destinationHex: string, amountCents: number) => void;
   /** Return to the scanner without paying. */
@@ -42,7 +40,6 @@ export interface DevPayScreenProps {
 }
 
 export function DevPayScreen({
-  availableBalanceCents,
   onPay,
   onCancel,
 }: DevPayScreenProps) {
@@ -54,13 +51,7 @@ export function DevPayScreen({
   const addressShowError = addressRaw.trim().length > 0 && parsedAddress === null;
   const amountShowError = amountRaw.trim().length > 0 && parsedCents === null;
 
-  const insufficient =
-    parsedCents !== null &&
-    availableBalanceCents !== null &&
-    availableBalanceCents < parsedCents;
-
-  const canPay =
-    parsedAddress !== null && parsedCents !== null && !insufficient;
+  const canPay = parsedAddress !== null && parsedCents !== null;
 
   return (
     <Frame
@@ -70,7 +61,7 @@ export function DevPayScreen({
           <PrimaryButton
             disabled={!canPay}
             onClick={() => {
-              if (parsedAddress !== null && parsedCents !== null && !insufficient) {
+              if (parsedAddress !== null && parsedCents !== null) {
                 onPay(parsedAddress, parsedCents);
               }
             }}
@@ -148,10 +139,6 @@ export function DevPayScreen({
           <p className="dev-pay__hint dev-pay__hint--error">
             Enter a positive amount, up to 2 decimal places.
           </p>
-        ) : insufficient ? (
-          <p className="dev-pay__hint dev-pay__hint--error">
-            Above the vault balance.
-          </p>
         ) : (
           <p className="dev-pay__hint">
             Cents only. 1:1 with cents on the host wire.
@@ -160,18 +147,6 @@ export function DevPayScreen({
       </div>
 
       <div style={{ flex: 1 }} />
-      <Dotted />
-      <dl style={{ margin: 0 }}>
-        <MetaRow
-          label="Balance"
-          value={
-            availableBalanceCents !== null
-              ? `${formatAmountCents(availableBalanceCents)} ${ASSET_LABEL}`
-              : "—"
-          }
-          mono
-        />
-      </dl>
     </Frame>
   );
 }

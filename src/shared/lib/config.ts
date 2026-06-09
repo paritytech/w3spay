@@ -74,27 +74,12 @@ export interface EnvConfig {
     readonly readOnlyOrigin: string;
   };
   readonly token: {
-    /** Verbose token name. Reserved for future display surfaces. */
-    readonly name: string;
     /** UI ticker (`"CASH"`), surfaced alongside amounts. */
     readonly symbol: string;
-    /** Smallest-unit decimals — the host API speaks in `10^decimals`. */
-    readonly decimals: number;
-    /** UI display precision. Cents (2) is the only resolution that matters on a receipt. */
-    readonly displayDecimals: number;
     /** Plancks per cent: `10^(decimals − displayDecimals)`. For CASH, `10_000`. */
     readonly plancksPerCent: number;
   };
   readonly payment: {
-    /** Below this spendable balance, the confirm screen surfaces the top-up hint. */
-    readonly minSpendableCents: number;
-    /**
-     * Synthetic balance shown when the host can't read the real one (not
-     * signed in, vault uninitialised, transient fault). High enough to clear
-     * `minSpendableCents` and any plausible total; the real `paymentRequest`
-     * still goes through the host and fails if the account isn't funded.
-     */
-    readonly dummyBalanceCents: number;
     /**
      * Seed MAIN_PURSE balance for the in-memory reference host (dev only), in
      * **plancks** to match the production wire. 10_000_000_000 ≈ 10_000 CASH.
@@ -117,15 +102,6 @@ export interface EnvConfig {
     readonly standaloneWaitTimeoutMs: number;
   };
   readonly storage: {
-    /** KvStore key for the local payment history envelope. */
-    readonly paymentHistoryKey: string;
-    /** Cap on the number of entries kept in the local history. */
-    readonly paymentHistoryMaxEntries: number;
-    /**
-     * Envelope schema version. Version-mismatched reads are dropped — the
-     * history is a UI cache, not a fiscal record, so there is no migration.
-     */
-    readonly paymentHistorySchemaVersion: 4;
     /** KvStore key for the local saved-receipts envelope. */
     readonly receiptsKey: string;
     /** Cap on the number of saved receipts kept locally. */

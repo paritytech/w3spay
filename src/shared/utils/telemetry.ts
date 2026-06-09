@@ -18,17 +18,17 @@ import { JourneyTracker } from "@/telemetry";
  * session and commits the dashboard to a new categorical filter.
  */
 export type AppJourneyType =
-  | "app-boot"
-  | "qr-scan"
-  | "customer-pay"
-  | "dev-pay";
+  | "w3spay:app-boot"
+  | "w3spay:qr-scan"
+  | "w3spay:customer-pay"
+  | "w3spay:dev-pay";
 
 /** Sentry `op` per journey root span. Keep stable — changing them invalidates the dashboard's saved searches. */
 const APP_JOURNEY_OPS: Readonly<Record<AppJourneyType, string>> = {
-  "app-boot": "journey.app-boot",
-  "qr-scan": "journey.qr-scan",
-  "customer-pay": "journey.customer-pay",
-  "dev-pay": "journey.dev-pay",
+  "w3spay:app-boot": "journey.w3spay:app-boot",
+  "w3spay:qr-scan": "journey.w3spay:qr-scan",
+  "w3spay:customer-pay": "journey.w3spay:customer-pay",
+  "w3spay:dev-pay": "journey.w3spay:dev-pay",
 };
 
 /**
