@@ -7,7 +7,7 @@ import {
   VersionUnchangedError,
   InvalidRegistryAddressError,
 } from "@/features/merchants/lib/onchain-loader.ts";
-import { W3SPayMerchantRegistryABI } from "@/features/merchants/lib/registry-abi.ts";
+import { W3SPayRegistryABI } from "@/features/merchants/lib/registry-abi.ts";
 import {
   identityKey,
   loadMerchants,
@@ -17,7 +17,7 @@ import {
 import type { KvStore } from "@/shared/utils/kv-store.ts";
 import { envConfig } from "@/config";
 
-const iface = new ethers.Interface(W3SPayMerchantRegistryABI);
+const iface = new ethers.Interface(W3SPayRegistryABI);
 
 const REGISTRY_ADDRESS = "0x" + "ab".repeat(20);
 /**

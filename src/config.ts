@@ -19,7 +19,7 @@ export function readEnv(): EnvConfig {
   const displayDecimals = 2;
   return {
     contracts: {
-      merchantRegistryAddress: envString("VITE_W3SPAY_REGISTRY_ADDRESS", "0xfec1497a5fbfc2583ea52bc7504701f95ea4a68a"),
+      merchantRegistryAddress: envString("VITE_W3SPAY_REGISTRY_ADDRESS", "0x70f6a449d770931419cfa8d8412e3a5d6377e905"),
     },
     merchant: {
       pilotId: envString("VITE_W3SPAY_PILOT_MERCHANT_ID", "funkhaus"),

@@ -20,13 +20,13 @@
 import type { PolkadotClient } from "polkadot-api";
 import { readContract } from "@/shared/api/contracts";
 
-import { W3SPayMerchantRegistryABI } from "@/features/merchants/lib/registry-abi.ts";
+import { W3SPayRegistryABI } from "@/features/merchants/lib/registry-abi.ts";
 
 /** H160 (20-byte) address, 0x-prefixed, case-insensitive. */
 const H160_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 /**
- * One decoded on-chain row. Mirrors `IW3SPayMerchantRegistry.MerchantEntry`.
+ * One decoded on-chain row. Mirrors `IW3SPayRegistry.MerchantEntry`.
  * The destination is a 32-byte AccountId32 (Substrate, not H160), returned
  * as `bytes32 destinationAccountId` and preserved as lowercase 0x-prefixed
  * hex so `MerchantDestination.accountId32` consumes it without re-encoding.
@@ -103,7 +103,7 @@ export async function loadOverlayFromChain(
 
   const [version] = await readContract<[bigint]>(client, {
     address,
-    abi: W3SPayMerchantRegistryABI,
+    abi: W3SPayRegistryABI,
     functionName: "getVersion",
     origin,
     at: "best",
@@ -115,7 +115,7 @@ export async function loadOverlayFromChain(
 
   const keys = await readContract<readonly `0x${string}`[]>(client, {
     address,
-    abi: W3SPayMerchantRegistryABI,
+    abi: W3SPayRegistryABI,
     functionName: "getAllTerminalKeys",
     origin,
     at: "best",
@@ -125,7 +125,7 @@ export async function loadOverlayFromChain(
   for (const key of keys) {
     const [entry] = await readContract<[RawMerchantEntry]>(client, {
       address,
-      abi: W3SPayMerchantRegistryABI,
+      abi: W3SPayRegistryABI,
       functionName: "getMerchantByKey",
       args: [key],
       origin,

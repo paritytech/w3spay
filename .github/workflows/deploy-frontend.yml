@@ -72,7 +72,7 @@ jobs:
           MNEMONIC: ${{ secrets.DOTNS_MNEMONIC }}
           BULLETIN_ENV: paseo-next-v2
           VITE_NETWORK: ${{ vars.VITE_NETWORK || 'paseo-next-v2' }}
-          VITE_W3SPAY_REGISTRY_ADDRESS: ${{ vars.VITE_W3SPAY_REGISTRY_ADDRESS || '0xfec1497a5fbfc2583ea52bc7504701f95ea4a68a' }}
+          VITE_W3SPAY_REGISTRY_ADDRESS: ${{ vars.VITE_W3SPAY_REGISTRY_ADDRESS || '0x70f6a449d770931419cfa8d8412e3a5d6377e905' }}
           VITE_W3SPAY_PILOT_MERCHANT_ID: ${{ vars.VITE_W3SPAY_PILOT_MERCHANT_ID || 'funkhaus' }}
           NODE_OPTIONS: '--max-old-space-size=8192'
 

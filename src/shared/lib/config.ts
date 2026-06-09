@@ -44,7 +44,7 @@ export function envFlag(key: string, fallback: boolean): boolean {
 export interface EnvConfig {
   readonly contracts: {
     /**
-     * H160 address of the deployed `W3SPayMerchantRegistry`. Empty until
+     * H160 address of the deployed `W3SPayRegistry`. Empty until
      * `VITE_W3SPAY_REGISTRY_ADDRESS` is set; empty skips the chain step and
      * falls back to the `KvStore` snapshot (no bundled merchant fallback).
      */

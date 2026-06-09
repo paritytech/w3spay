@@ -8,9 +8,9 @@
  * `getMerchantByKey` / `getMerchant` views — drift between writer (admin)
  * and reader (w3spay) silently produces zero rows or garbage decodes.
  *
- * Source of truth: `apps/w3spay-admin/contracts/src/W3SPayMerchantRegistry.sol`.
+ * Source of truth: `apps/w3spay-admin/contracts/src/W3SPayRegistry.sol`.
  */
-export const W3SPayMerchantRegistryABI = [
+export const W3SPayRegistryABI = [
   {
     inputs: [],
     name: "getVersion",
@@ -42,12 +42,12 @@ export const W3SPayMerchantRegistryABI = [
           { internalType: "string", name: "terminalId", type: "string" },
           { internalType: "bytes32", name: "destinationAccountId", type: "bytes32" },
           { internalType: "string", name: "displayName", type: "string" },
-          { internalType: "enum IW3SPayMerchantRegistry.MerchantStatus", name: "status", type: "uint8" },
+          { internalType: "enum IW3SPayRegistry.MerchantStatus", name: "status", type: "uint8" },
           { internalType: "uint64", name: "addedAt", type: "uint64" },
           { internalType: "uint64", name: "updatedAt", type: "uint64" },
           { internalType: "bool", name: "exists", type: "bool" },
         ],
-        internalType: "struct IW3SPayMerchantRegistry.MerchantEntry",
+        internalType: "struct IW3SPayRegistry.MerchantEntry",
         name: "",
         type: "tuple",
       },

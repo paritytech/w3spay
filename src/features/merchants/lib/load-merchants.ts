@@ -5,7 +5,7 @@
  * Merchant table loader. The on-chain registry is the single source of
  * truth; merchant identity arrives via the t3rminal deeplink
  * (`merchantId, terminalId`), destination + displayName from
- * `W3SPayMerchantRegistry` on Paseo Asset Hub.
+ * `W3SPayRegistry` on Paseo Asset Hub.
  *
  * Boot resolution order: chain (read rows, cache snapshot) → cache (last
  * chain snapshot) → empty (every lookup is `unknownMerchant`). The registry

@@ -13,6 +13,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/dm-serif-display": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@novasamatech/host-api": "0.8.6",
     "@novasamatech/host-api-wrapper": "0.8.6",
     "@polkadot-api/signers-common": "^0.2.3",
