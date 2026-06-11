@@ -14,11 +14,11 @@ Mobile-first customer checkout for the W3S Receipts payment surface. The app sca
 
 ```bash
 npm install
-cp .env.example .env.local        # set VITE_DOTNS_PRODUCT_DOMAIN and confirm VITE_* values
-npm run deploy                    # builds and publishes the configured .dot product
+cp .env.example .env.local        # set secrets, or let the wizard prompt
+npm run setup                     # guided deploy: configure → readiness → publish
 ```
 
-`deploy.sh` requires a deployment mnemonic from `MNEMONIC` or `DOTNS_MNEMONIC`, and it requires `VITE_NETWORK` to match `BULLETIN_ENV`.
+See **[DEPLOY.md](./DEPLOY.md)** for the full guide: the `npm run setup` wizard, the `.env.local` variable table, flags (`--yes`, `--dry-run`, `--publish`, …), and the manual `npm run deploy` path.
 
 ### Frontend (local dev)
 
