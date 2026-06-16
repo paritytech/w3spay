@@ -84,3 +84,17 @@ export async function saveReceipt(
 export function itemLineTotalCents(item: { unitPriceCents: number; quantity: number }): number {
   return item.unitPriceCents * item.quantity;
 }
+
+/**
+ * Tax included in a gross (tax-inclusive) amount, in integer cents. Receipts
+ * carry only `taxRatePercent`, so the saved-receipt screen backs the tax out of
+ * the gross subtotal to show a Tax line. `taxRatePercent` is a percent
+ * (19 → 19%); a non-positive or non-finite rate yields 0.
+ */
+export function receiptTaxCents(grossCents: number, taxRatePercent: number): number {
+  if (!Number.isFinite(grossCents) || !Number.isInteger(grossCents)) {
+    throw new TypeError(`receiptTaxCents expects integer cents, got ${grossCents}`);
+  }
+  if (!(taxRatePercent > 0)) return 0;
+  return grossCents - Math.round(grossCents / (1 + taxRatePercent / 100));
+}

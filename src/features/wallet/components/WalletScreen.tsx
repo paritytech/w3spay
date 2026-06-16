@@ -29,7 +29,7 @@ export interface WalletScreenProps {
 export function WalletScreen({ onBack, onOpenReceiptRecord }: WalletScreenProps) {
   return (
     <Frame>
-      <div style={{ position: "absolute", top: 60, right: 18, zIndex: 4 }}>
+      <div style={{ display: "flex", marginBottom: 6 }}>
         <IconButton onClick={onBack} label="Close" icon="x" />
       </div>
 

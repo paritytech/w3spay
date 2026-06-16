@@ -11,6 +11,7 @@ import {
 import { dispatchScannedPayload } from "@/features/scan/lib/dispatcher.ts";
 import {
   itemLineTotalCents,
+  receiptTaxCents,
   readReceipts,
   RECEIPTS_KEY,
   saveReceipt,
@@ -121,6 +122,13 @@ describe("parseReceipt", () => {
     expect(r.currency).toBe("CASH");
     expect(r.taxRatePercent).toBe(19);
     expect(r.issuedAt).toBe("2026-06-02T09:14:32.012Z");
+  });
+
+  it("parses an optional tip field into tipCents (undefined when absent)", () => {
+    expect(parseReceipt(SAMPLE_RECEIPT).tipCents).toBeUndefined();
+    const tipped = cloneSample();
+    tipped.tip = "2.50";
+    expect(parseReceipt(tipped).tipCents).toBe(250);
   });
 
   it("parses the business block", () => {
@@ -381,6 +389,24 @@ describe("itemLineTotalCents", () => {
   it("multiplies unit price by quantity", () => {
     expect(itemLineTotalCents({ unitPriceCents: 450, quantity: 3 })).toBe(1350);
     expect(itemLineTotalCents({ unitPriceCents: 0, quantity: 5 })).toBe(0);
+  });
+});
+
+describe("receiptTaxCents", () => {
+  it("backs the included tax out of a gross amount", () => {
+    expect(receiptTaxCents(11900, 19)).toBe(1900);
+    expect(receiptTaxCents(1070, 7)).toBe(70);
+  });
+  it("rounds to whole cents", () => {
+    expect(receiptTaxCents(100, 19)).toBe(16);
+  });
+  it("returns 0 for a non-positive or non-finite rate", () => {
+    expect(receiptTaxCents(1000, 0)).toBe(0);
+    expect(receiptTaxCents(1000, -5)).toBe(0);
+    expect(receiptTaxCents(1000, Number.NaN)).toBe(0);
+  });
+  it("throws on non-integer cents", () => {
+    expect(() => receiptTaxCents(100.5, 19)).toThrow(TypeError);
   });
 });
 

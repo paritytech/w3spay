@@ -261,6 +261,16 @@ async function renderToCanvas(
   const taxNote = `incl. ${receipt.taxRatePercent}% tax`;
   ctx.fillText(taxNote, PAD + IW / 2 - ctx.measureText(taxNote).width / 2, y + 14);
   y += 24;
+  // Subtotal/tip split — `amountCents` above is the grand total, so derive the
+  // subtotal as `amountCents − tipCents`. Drawn only when the receipt was tipped.
+  if (receipt.tipCents != null && receipt.tipCents > 0) {
+    const subtotalCents = receipt.amountCents - receipt.tipCents;
+    const tipNote = `Subtotal ${formatAmountCents(subtotalCents)} · Tip ${formatAmountCents(receipt.tipCents)} ${receipt.currency}`;
+    ctx.font = "italic 13px 'DM Serif Display', Georgia, serif";
+    ctx.fillStyle = C.tertiary;
+    ctx.fillText(tipNote, PAD + IW / 2 - ctx.measureText(tipNote).width / 2, y + 14);
+    y += 22;
+  }
 
   // Divider
   y += 8;

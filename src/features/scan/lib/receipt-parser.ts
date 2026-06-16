@@ -43,6 +43,9 @@ export interface ParsedReceipt {
   readonly version: number;
   readonly saleId: string;
   readonly amountCents: number;
+  /** Tip in integer cents, present only when the receipt carried a tip.
+   *  `amountCents` is the grand total, so the subtotal is `amountCents − tipCents`. */
+  readonly tipCents?: number;
   readonly asset: string;
   readonly currency: string;
   readonly taxRatePercent: number;
@@ -105,11 +108,14 @@ export function parseReceipt(json: unknown): ParsedReceipt {
   const issuedAt = requireNonEmptyString(obj, "issuedAt");
   const amountCents = parseDecimalToCents(requireNonEmptyString(obj, "amount"));
   const taxRatePercent = requireFiniteNumber(obj, "taxRate");
+  const jsonTipRaw = optionalString(obj.tip);
+  const tipCents = jsonTipRaw !== undefined ? parseDecimalToCents(jsonTipRaw) : undefined;
 
   return {
     version: RECEIPT_QR_VERSION,
     saleId,
     amountCents,
+    tipCents,
     asset,
     currency,
     taxRatePercent,
@@ -206,6 +212,7 @@ export const PARAM = {
   blockHash: "bh",
   blockNumber: "bk",
   merchantAddress: "m",
+  tip: "tp",
 } as const;
 
 /**
@@ -243,6 +250,8 @@ export function parseSaveReceiptParams(params: URLSearchParams): ParsedReceipt {
   const currency = requireParam(params, PARAM.currency);
   const issuedAt = requireParam(params, PARAM.issuedAt);
   const amountCents = parseDecimalToCents(requireParam(params, PARAM.amount));
+  const tipRaw = optionalParam(params, PARAM.tip);
+  const tipCents = tipRaw !== undefined ? parseDecimalToCents(tipRaw) : undefined;
   const taxRatePercent = Number(requireParam(params, PARAM.taxRate));
   if (!Number.isFinite(taxRatePercent)) {
     throw new ReceiptParseError(
@@ -259,6 +268,7 @@ export function parseSaveReceiptParams(params: URLSearchParams): ParsedReceipt {
     version: RECEIPT_QR_VERSION,
     saleId,
     amountCents,
+    tipCents,
     asset,
     currency,
     taxRatePercent,

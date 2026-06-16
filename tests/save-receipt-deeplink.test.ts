@@ -46,6 +46,11 @@ describe("parseSaveReceiptUrl", () => {
     expect(r.blockNumber).toBe(566207);
   });
 
+  it("parses an optional tip into tipCents and leaves it undefined when absent", () => {
+    expect(parseSaveReceiptUrl(URL_STR).tipCents).toBeUndefined();
+    expect(parseSaveReceiptUrl(`${URL_STR}&tp=2.50`).tipCents).toBe(250);
+  });
+
   it("rejects a payload missing required params", () => {
     expect(() =>
       parseSaveReceiptUrl("polkadotapp://w3spay.dot/#/save-receipt?v=1&id=X"),

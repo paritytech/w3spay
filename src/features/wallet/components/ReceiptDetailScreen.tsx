@@ -3,9 +3,9 @@
 
 /**
  * Saved-receipt detail view (tap a row on Receipts). Renders the full purchase
- * — business, issue time, totals, itemised lines, block / merchant references —
- * plus, when the record carries the raw QR text, the original `t3rminal-receipt`
- * code re-rendered into a scannable SVG.
+ * — business header, issue time, the shared `ReceiptBreakdown` (line items, then
+ * a tax / subtotal / tip / total summary, same format as the receipt-saved
+ * screen), and block / merchant references.
  *
  * The footer "save as PNG" goes through the Web Share API on mobile (so the OS
  * offers "Save Image" → Photos) and a download on desktop. See
@@ -14,12 +14,12 @@
 
 import { useCallback, useState } from "react";
 
-import { formatAmountCents } from "@/shared/utils/format-amount.ts";
-import { itemLineTotalCents, type ReceiptRecord } from "@/features/wallet/api/receipts.ts";
+import { type ReceiptRecord } from "@/features/wallet/api/receipts.ts";
+import { ReceiptBreakdown } from "@/features/wallet/components/ReceiptBreakdown.tsx";
 import { useQrSvg } from "@/features/wallet/api/qr-svg.ts";
 import { saveReceiptImage } from "@/shared/utils/save-receipt-image.ts";
-import { Dotted, Eyebrow, Frame, Head, Icon, IconButton, MetaRow, SecondaryButton } from "@/shared/components/primitives.tsx";
-import { formatHistoryDate, shortHex, splitDisplayName } from "@/shared/utils/format.ts";
+import { Dotted, Eyebrow, Frame, Head, Icon, IconButton, SecondaryButton } from "@/shared/components/primitives.tsx";
+import { formatHistoryDate, splitDisplayName } from "@/shared/utils/format.ts";
 
 export interface ReceiptDetailScreenProps {
   record: ReceiptRecord;
@@ -62,7 +62,7 @@ export function ReceiptDetailScreen({ record, onBack }: ReceiptDetailScreenProps
         </SecondaryButton>
       }
     >
-      <div style={{ position: "absolute", top: 60, right: 18, zIndex: 4 }}>
+      <div style={{ display: "flex", marginBottom: 6 }}>
         <IconButton onClick={onBack} label="Back" icon="chevron-left" />
       </div>
 
@@ -103,77 +103,10 @@ export function ReceiptDetailScreen({ record, onBack }: ReceiptDetailScreenProps
 
         <Dotted style={{ marginTop: 18, marginBottom: 6 }} />
 
-        <div className="receipt-amount">
-          <div className="receipt-amount__value">
-            {formatAmountCents(receipt.amountCents)}
-            <span className="receipt-amount__ticker"> {receipt.currency}</span>
-          </div>
-          <div className="receipt-amount__breakdown">incl. {receipt.taxRatePercent}% tax</div>
-        </div>
-
-        <Dotted style={{ marginTop: 6 }} />
-
-        <Eyebrow>Items</Eyebrow>
-        <div style={{ margin: "8px 0 0" }}>
-          {receipt.items.map((item, i) => (
-            <div
-              key={`${item.name}-${i}`}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                padding: "8px 0",
-                gap: 12,
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-serif)",
-                    fontSize: 15,
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {item.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "var(--color-text-muted)",
-                    letterSpacing: "0.04em",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {item.quantity} × {formatAmountCents(item.unitPriceCents)} {receipt.currency}
-                </div>
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 14,
-                  color: "var(--color-text-secondary)",
-                  fontVariantNumeric: "tabular-nums",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {formatAmountCents(itemLineTotalCents(item))} {receipt.currency}
-              </div>
-            </div>
-          ))}
-        </div>
+        <ReceiptBreakdown receipt={receipt} />
 
         <Dotted />
 
-        <Eyebrow>Receipt details</Eyebrow>
-        <dl style={{ margin: "8px 0 0" }}>
-          <MetaRow label="Sale ID" value={receipt.saleId} mono />
-          {receipt.blockNumber != null ? (
-            <MetaRow label="Block" value={`#${receipt.blockNumber}`} mono />
-          ) : null}
-          {receipt.merchantAddress ? (
-            <MetaRow label="Merchant" value={shortHex(receipt.merchantAddress)} mono />
-          ) : null}
-        </dl>
         <div style={{ paddingBottom: 12 }} />
       </div>
     </Frame>
