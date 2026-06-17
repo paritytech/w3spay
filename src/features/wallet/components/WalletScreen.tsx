@@ -19,7 +19,7 @@ import {
   Head,
   IconButton,
 } from "@/shared/components/primitives.tsx";
-import { formatHistoryDate, splitDisplayName } from "@/shared/utils/format.ts";
+import { ASSET_LABEL, formatHistoryDate, splitDisplayName } from "@/shared/utils/format.ts";
 
 export interface WalletScreenProps {
   onBack: () => void;
@@ -108,7 +108,7 @@ function ReceiptRow({ record, divider, onOpen }: ReceiptRowProps) {
         </div>
         <div style={{ textAlign: "right" }}>
           <div className="history__amount">
-            {formatAmountCents(receipt.amountCents)} {receipt.currency}
+            {formatAmountCents(receipt.amountCents)} {ASSET_LABEL}
           </div>
           <div className="history__status">
             {itemCount} {itemCount === 1 ? "item" : "items"}

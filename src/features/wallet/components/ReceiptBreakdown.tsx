@@ -17,6 +17,7 @@ import type { ParsedReceipt } from "@/features/scan/lib/receipt-parser.ts";
 import { ReceiptLineItems } from "@/features/wallet/components/ReceiptLineItems.tsx";
 import { Dotted, Eyebrow, MetaRow } from "@/shared/components/primitives.tsx";
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
+import { ASSET_LABEL } from "@/shared/utils/format.ts";
 
 export interface ReceiptBreakdownProps {
   receipt: ParsedReceipt;
@@ -26,14 +27,13 @@ export function ReceiptBreakdown({ receipt }: ReceiptBreakdownProps) {
   const tipCents = receipt.tipCents ?? 0;
   const hasTip = tipCents > 0;
   const subtotalCents = receipt.amountCents - tipCents;
-  const currency = receipt.currency;
 
   return (
     <>
       {receipt.items.length > 0 ? (
         <>
           <Eyebrow>Items</Eyebrow>
-          <ReceiptLineItems items={receipt.items} currency={currency} />
+          <ReceiptLineItems items={receipt.items} />
           <Dotted style={{ marginTop: 6 }} />
         </>
       ) : null}
@@ -41,11 +41,11 @@ export function ReceiptBreakdown({ receipt }: ReceiptBreakdownProps) {
       <dl style={{ margin: "8px 0 0" }}>
         <MetaRow
           label="Subtotal"
-          value={`${formatAmountCents(subtotalCents)} ${currency}`}
+          value={`${formatAmountCents(subtotalCents)} ${ASSET_LABEL}`}
           mono
         />
         {hasTip ? (
-          <MetaRow label="Tip" value={`${formatAmountCents(tipCents)} ${currency}`} mono />
+        <MetaRow label="Tip" value={`${formatAmountCents(tipCents)} ${ASSET_LABEL}`} mono />
         ) : null}
       </dl>
 
@@ -78,7 +78,7 @@ export function ReceiptBreakdown({ receipt }: ReceiptBreakdownProps) {
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          {formatAmountCents(receipt.amountCents)} {currency}
+          {formatAmountCents(receipt.amountCents)} {ASSET_LABEL}
         </span>
       </div>
     </>

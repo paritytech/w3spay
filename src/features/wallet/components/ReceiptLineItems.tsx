@@ -12,13 +12,13 @@
 import type { ReceiptItem } from "@/features/scan/lib/receipt-parser.ts";
 import { itemLineTotalCents } from "@/features/wallet/api/receipts.ts";
 import { formatAmountCents } from "@/shared/utils/format-amount.ts";
+import { ASSET_LABEL } from "@/shared/utils/format.ts";
 
 export interface ReceiptLineItemsProps {
   items: readonly ReceiptItem[];
-  currency: string;
 }
 
-export function ReceiptLineItems({ items, currency }: ReceiptLineItemsProps) {
+export function ReceiptLineItems({ items }: ReceiptLineItemsProps) {
   return (
     <div style={{ margin: "8px 0 0" }}>
       {items.map((item, i) => (
@@ -50,7 +50,7 @@ export function ReceiptLineItems({ items, currency }: ReceiptLineItemsProps) {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {item.quantity} × {formatAmountCents(item.unitPriceCents)} {currency}
+              {item.quantity} × {formatAmountCents(item.unitPriceCents)} {ASSET_LABEL}
             </div>
           </div>
           <div
@@ -62,7 +62,7 @@ export function ReceiptLineItems({ items, currency }: ReceiptLineItemsProps) {
               whiteSpace: "nowrap",
             }}
           >
-            {formatAmountCents(itemLineTotalCents(item))} {currency}
+            {formatAmountCents(itemLineTotalCents(item))} {ASSET_LABEL}
           </div>
         </div>
       ))}
