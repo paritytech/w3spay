@@ -28,7 +28,7 @@ import {
 const PLANCKS_PER_CENT = BigInt(envConfig.token.plancksPerCent);
 
 export interface SendPaymentInput {
-  /** Receipt total in cents (parsed from the TSE QR, treated as CASH cents 1:1). */
+  /** Receipt total in cents (parsed from the TSE QR, treated as CASH TOKEN cents 1:1). */
   amountCents: number;
   /** Merchant destination — either a raw AccountId32 or a revive contract. */
   merchantDestination: MerchantDestination;
@@ -57,7 +57,7 @@ export interface SendPaymentResult {
 
 export async function sendPayment(input: SendPaymentInput): Promise<SendPaymentResult> {
   const destinationBytes = resolveDestinationBytes(input.merchantDestination);
-  // The TSE QR carries EUR cents; coinage spends CASH cents. We treat
+  // The TSE QR carries EUR cents; coinage spends CASH TOKEN cents. We treat
   // them 1:1 for the pilot (no FX wire). Real eurobot integration is
   // post-MVP.
   const plancks = BigInt(input.amountCents) * PLANCKS_PER_CENT;

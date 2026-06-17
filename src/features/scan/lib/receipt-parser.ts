@@ -10,7 +10,7 @@
  *   {
  *     "v": 1, "type": "t3rminal-receipt",
  *     "saleId": "01KSPY…", "amount": "7.50",
- *     "asset": "CASH", "currency": "CASH", "taxRate": 19,
+ *     "asset": "CASH TOKEN", "currency": "CASH TOKEN", "taxRate": 19,
  *     "business": { "name": …, "addressLine1"?: …, "addressLine2"?: …, "phone"?: … },
  *     "items": [ { "name": …, "quantity": 1, "unitPrice": "3.00" }, … ],
  *     "issuedAt": "2026-06-02T09:14:32.012Z",

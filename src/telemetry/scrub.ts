@@ -193,7 +193,7 @@ export function beforeSend(
  * Allowed breadcrumb categories; anything else is dropped before reaching
  * Sentry. Default categories (console/xhr/fetch/navigation/ui.click) all leak:
  * a fetch URL carries the registry contract address, ui.click carries DOM
- * text like "Pay 4.20 CASH to <merchant>". We add our own via breadcrumb().
+ * text like "Pay 4.20 CASH TOKEN to <merchant>". We add our own via breadcrumb().
  */
 const ALLOWED_BREADCRUMB_CATEGORIES: ReadonlySet<string> = new Set([
   "journey",

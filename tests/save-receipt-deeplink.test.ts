@@ -13,7 +13,7 @@ import {
 import { useSessionStore } from "@/features/payment/store/session-store.ts";
 
 const QUERY =
-  "?v=1&id=01KTQ4VZJMGY2SKYNPDTTFJ034&a=14.50&as=CASH&c=EUR&t=19" +
+  "?v=1&id=01KTQ4VZJMGY2SKYNPDTTFJ034&a=14.50&as=CASH+TOKEN&c=EUR&t=19" +
   "&ts=2026-06-09T21%3A33%3A27.508Z&bn=Krusty+Krab+Pizza" +
   "&a1=12+Bikiini+Bottom&a2=12459+Berlin&tel=0112312312" +
   "&i=Pierogi+%288+St%C3%BCck%29%7C1%7C9.00&i=Bratkartoffeln%7C1%7C5.50&bk=566207";
@@ -34,7 +34,7 @@ describe("parseSaveReceiptUrl", () => {
     const r = parseSaveReceiptUrl(URL_STR);
     expect(r.saleId).toBe("01KTQ4VZJMGY2SKYNPDTTFJ034");
     expect(r.amountCents).toBe(1450);
-    expect(r.asset).toBe("CASH");
+    expect(r.asset).toBe("CASH TOKEN");
     expect(r.currency).toBe("EUR");
     expect(r.taxRatePercent).toBe(19);
     expect(r.business.name).toBe("Krusty Krab Pizza");

@@ -3,7 +3,7 @@
 
 /**
  * Cents → display string helpers. From the parser outward w3spay treats every
- * amount as CASH cents.
+ * amount as CASH TOKEN cents.
  *
  * Cents are 1/100 of the token by design — independent of `TOKEN_DECIMALS`
  * (the on-chain plancks unit). Cents↔plancks conversion happens inside

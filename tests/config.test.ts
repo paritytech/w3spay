@@ -11,13 +11,13 @@ import { envConfig } from "@/config";
  */
 describe("envConfig", () => {
   it("locks token identity", () => {
-    expect(envConfig.token.symbol).toBe("CASH");
-    // Derived from CASH wire decimals (6) and cent display precision (2).
+    expect(envConfig.token.symbol).toBe("CASH TOKEN");
+    // Derived from CASH TOKEN wire decimals (6) and cent display precision (2).
     expect(envConfig.token.plancksPerCent).toBe(10_000);
   });
 
   it("locks the dev seed balance", () => {
-    // 10_000_000_000 plancks ≈ 10_000 CASH (10⁶ plancks per token).
+    // 10_000_000_000 plancks ≈ 10_000 CASH TOKEN (10⁶ plancks per token).
     expect(envConfig.payment.devStartingBalancePlancks).toBe(10_000_000_000);
   });
 
