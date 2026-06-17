@@ -29,10 +29,10 @@ export function readEnv(): EnvConfig {
     chain: {
       network:
         parseNetworkKey(import.meta.env.VITE_NETWORK as string | undefined) ?? DEFAULT_W3SPAY_NETWORK,
-      readOnlyOrigin: "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+      readOnlyOrigin: "5C4hrfjw9DjXZTzV3MwzrrAr9P1MLDHajjSidz9bR544LEq1",
     },
     token: {
-      symbol: "CASH",
+      symbol: "CASH TOKEN",
       plancksPerCent: 10 ** (decimals - displayDecimals),
     },
     payment: {

@@ -30,8 +30,8 @@ const SAMPLE_RECEIPT = {
   type: "t3rminal-receipt",
   saleId: "01KSPY4NC1RD5FEA039Y5GQ8JR",
   amount: "7.50",
-  asset: "CASH",
-  currency: "CASH",
+  asset: "CASH TOKEN",
+  currency: "CASH TOKEN",
   taxRate: 19,
   business: {
     name: "Funkhaus Berlin Events GmbH",
@@ -102,8 +102,8 @@ function makeRecord(saleId: string, savedAt = "2026-06-02T10:00:00.000Z"): Recei
     type: RECEIPT_QR_TYPE,
     saleId,
     amount: "1.00",
-    asset: "CASH",
-    currency: "CASH",
+    asset: "CASH TOKEN",
+    currency: "CASH TOKEN",
     taxRate: 19,
     business: { name: "Test GmbH" },
     items: [{ name: "Thing", quantity: 1, unitPrice: "1.00" }],
@@ -118,8 +118,8 @@ describe("parseReceipt", () => {
     expect(r.version).toBe(RECEIPT_QR_VERSION);
     expect(r.saleId).toBe("01KSPY4NC1RD5FEA039Y5GQ8JR");
     expect(r.amountCents).toBe(750);
-    expect(r.asset).toBe("CASH");
-    expect(r.currency).toBe("CASH");
+    expect(r.asset).toBe("CASH TOKEN");
+    expect(r.currency).toBe("CASH TOKEN");
     expect(r.taxRatePercent).toBe(19);
     expect(r.issuedAt).toBe("2026-06-02T09:14:32.012Z");
   });
@@ -417,9 +417,9 @@ describe("receiptTaxCents", () => {
  */
 describe("real-world t3rminal-receipt payloads", () => {
   it("parses a generic-charge receipt with no line items", () => {
-    // Krusty Krab pizza, 5.50 CASH, items: [] — exact payload from a
+    // Krusty Krab pizza, 5.50 CASH TOKEN, items: [] — exact payload from a
     // June-2026 production scan that previously failed `malformedItems`.
-    const raw = `{"v":1,"type":"t3rminal-receipt","saleId":"01KT72Z0VCY8F6EB56SZZCGHF3","amount":"5.5","asset":"CASH","currency":"CASH","taxRate":19,"business":{"name":"Krusty Krab Pizza","addressLine1":"12 Bikiini Bottom","addressLine2":"12459 Berlin","phone":"0112312312"},"items":[],"issuedAt":"2026-06-03T15:52:19.052Z","blockHash":"0x1c9d4bc02143a0d081cdc47a0aa9375e20687567ddfd56ea427bfe6f231cfeeb","blockNumber":302047,"merchantAddress":"5DfXxr1Npfj42NDof2SFvMZ9DAWifjgA5NHTdb3FtjYpj7hr"}`;
+    const raw = `{"v":1,"type":"t3rminal-receipt","saleId":"01KT72Z0VCY8F6EB56SZZCGHF3","amount":"5.5","asset":"CASH TOKEN","currency":"CASH TOKEN","taxRate":19,"business":{"name":"Krusty Krab Pizza","addressLine1":"12 Bikiini Bottom","addressLine2":"12459 Berlin","phone":"0112312312"},"items":[],"issuedAt":"2026-06-03T15:52:19.052Z","blockHash":"0x1c9d4bc02143a0d081cdc47a0aa9375e20687567ddfd56ea427bfe6f231cfeeb","blockNumber":302047,"merchantAddress":"5DfXxr1Npfj42NDof2SFvMZ9DAWifjgA5NHTdb3FtjYpj7hr"}`;
     const r = parseReceiptQr(raw);
     expect(r.saleId).toBe("01KT72Z0VCY8F6EB56SZZCGHF3");
     expect(r.amountCents).toBe(550);
@@ -433,7 +433,7 @@ describe("real-world t3rminal-receipt payloads", () => {
     // pUSD) emits up to six fractional digits — e.g. "16.666666". The strict
     // ≤2-decimal parser used to reject these as `malformedAmount` /
     // `malformedItems`, dead-ending the scan on "Couldn't read that receipt".
-    const raw = `{"v":1,"type":"t3rminal-receipt","saleId":"01KT9P4M2QF8RA6N0V3K7E5XYZ","amount":"16.666666","asset":"CASH","currency":"CASH","taxRate":19,"business":{"name":"Funkhaus Berlin Events GmbH","addressLine1":"Nalepastraße 18","addressLine2":"12459 Berlin","phone":"030/12085416"},"items":[{"name":"Filterkaffee","quantity":3,"unitPrice":"2.333333"},{"name":"Mehrkornbrötchen","quantity":2,"unitPrice":"4.833334"}],"issuedAt":"2026-06-10T09:14:32.012Z","blockHash":"0x1c9d4bc02143a0d081cdc47a0aa9375e20687567ddfd56ea427bfe6f231cfeeb","blockNumber":1071340,"merchantAddress":"5DfXxr1Npfj42NDof2SFvMZ9DAWifjgA5NHTdb3FtjYpj7hr"}`;
+    const raw = `{"v":1,"type":"t3rminal-receipt","saleId":"01KT9P4M2QF8RA6N0V3K7E5XYZ","amount":"16.666666","asset":"CASH TOKEN","currency":"CASH TOKEN","taxRate":19,"business":{"name":"Funkhaus Berlin Events GmbH","addressLine1":"Nalepastraße 18","addressLine2":"12459 Berlin","phone":"030/12085416"},"items":[{"name":"Filterkaffee","quantity":3,"unitPrice":"2.333333"},{"name":"Mehrkornbrötchen","quantity":2,"unitPrice":"4.833334"}],"issuedAt":"2026-06-10T09:14:32.012Z","blockHash":"0x1c9d4bc02143a0d081cdc47a0aa9375e20687567ddfd56ea427bfe6f231cfeeb","blockNumber":1071340,"merchantAddress":"5DfXxr1Npfj42NDof2SFvMZ9DAWifjgA5NHTdb3FtjYpj7hr"}`;
     const r = parseReceiptQr(raw);
     expect(r.amountCents).toBe(1667);
     expect(r.items.map((i) => i.unitPriceCents)).toEqual([233, 483]);

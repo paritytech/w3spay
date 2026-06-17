@@ -74,15 +74,15 @@ export interface EnvConfig {
     readonly readOnlyOrigin: string;
   };
   readonly token: {
-    /** UI ticker (`"CASH"`), surfaced alongside amounts. */
+    /** UI ticker (`"CASH TOKEN"`), surfaced alongside amounts. */
     readonly symbol: string;
-    /** Plancks per cent: `10^(decimals − displayDecimals)`. For CASH, `10_000`. */
+    /** Plancks per cent: `10^(decimals − displayDecimals)`. For CASH TOKEN, `10_000`. */
     readonly plancksPerCent: number;
   };
   readonly payment: {
     /**
      * Seed MAIN_PURSE balance for the in-memory reference host (dev only), in
-     * **plancks** to match the production wire. 10_000_000_000 ≈ 10_000 CASH.
+     * **plancks** to match the production wire. 10_000_000_000 ≈ 10_000 CASH TOKEN.
      */
     readonly devStartingBalancePlancks: number;
   };
@@ -120,7 +120,7 @@ export interface EnvConfig {
     readonly tipScreen: boolean;
     /**
      * Dev-only manual-payment override: a "manual pay" affordance taking a raw
-     * AccountId32 hex + CASH amount through the same `host.paymentRequest` path
+     * AccountId32 hex + CASH TOKEN amount through the same `host.paymentRequest` path
      * the TSE scan does. NEVER enable this in a public deploy.
      */
     readonly devPaymentOverride: boolean;

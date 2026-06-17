@@ -2,7 +2,7 @@
 // @paritytech
 
 /**
- * Cashier-facing confirmation screen. The oversize CASH number is the
+ * Cashier-facing confirmation screen. The oversize CASH TOKEN number is the
  * cashier-glance affordance; the rest is structured receipt detail.
  */
 

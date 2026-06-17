@@ -51,7 +51,7 @@ export interface NetworkConfig {
    */
   bulletinChain: ChainEndpoint | null;
   /**
-   * People-system parachain where the CASH (pUSD) foreign asset lives
+   * People-system parachain where the CASH TOKEN (pUSD) foreign asset lives
    * (`pallet-assets` keyed by the token's XCM Location). `null` when a network
    * has no people chain; people-chain-dependent code must guard and treat null
    * as "feature unavailable".
@@ -98,7 +98,7 @@ export const NETWORKS: Record<NetworkKey, NetworkConfig> = {
       genesisHash:
         "0x8cfe6717dc4becfda2e13c488a1e2061ff2dfee96e7d031157f72d36716c0a22",
     },
-    // Paseo People Next — hosts the CASH (pUSD) foreign asset queried by the
+    // Paseo People Next — hosts the CASH TOKEN (pUSD) foreign asset queried by the
     // admin Balances tab. Genesis verified live (chain_getBlockHash(0)).
     peopleChain: {
       wsUrl: "wss://paseo-people-next-system-rpc.polkadot.io",

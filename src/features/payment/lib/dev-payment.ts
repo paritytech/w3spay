@@ -7,7 +7,7 @@
  * `parseDevAccountIdInput` accepts a 32-byte AccountId32 as `0x`-hex or an
  * SS58 address — both decode to the same public key, returned as canonical
  * lowercase hex so call sites get one representation.
- * `parseDevCashAmountInput` / `sanitizeDevCashInput` handle the decimal CASH
+ * `parseDevCashAmountInput` / `sanitizeDevCashInput` handle the decimal CASH TOKEN
  * amount (cents output), mirroring `tip.ts`. Framework-free for unit-testing.
  */
 
@@ -48,13 +48,13 @@ export function parseDevAccountIdInput(input: string): string | null {
 }
 
 /**
- * Cap on a single dev payment, in cents (9_999_999 == 99_999.99 CASH): above
+ * Cap on a single dev payment, in cents (9_999_999 == 99_999.99 CASH TOKEN): above
  * any plausible test transfer, but blocks a fat-finger absurd extrinsic.
  */
 export const MAX_DEV_PAYMENT_CENTS = 9_999_999;
 
 /**
- * Parse a user-typed CASH amount (`"0.01"`, `"1,50"`, `".5"`) into integer
+ * Parse a user-typed CASH TOKEN amount (`"0.01"`, `"1,50"`, `".5"`) into integer
  * cents. Accepts `.` and `,` separators. Returns `null` for empty,
  * unparseable, or `<= 0` input; clamped to `MAX_DEV_PAYMENT_CENTS`.
  */

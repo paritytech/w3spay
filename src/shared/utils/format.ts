@@ -3,12 +3,12 @@
 
 /**
  * Narrow cross-screen display helpers. w3spay is single-asset: every rendered
- * amount is CASH cents. `ASSET_LABEL` re-exports `TOKEN_TICKER` for back-compat.
+ * amount is CASH TOKEN cents. `ASSET_LABEL` re-exports `TOKEN_TICKER` for back-compat.
  */
 
 import { envConfig } from "@/config";
 
-/** Display string for the asset alongside the amount (e.g. "CASH"). */
+/** Display string for the asset alongside the amount (e.g. "CASH TOKEN"). */
 export const ASSET_LABEL = envConfig.token.symbol;
 
 /** Split `"Name (Venue)"` into name + optional venue for the editorial title. */

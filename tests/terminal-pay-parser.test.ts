@@ -25,7 +25,7 @@ describe("parseTerminalPayQr", () => {
     expect(result.addressSs58).toBe(ALICE_SS58);
     expect(result.addressHex).toBe(ALICE_HEX);
     expect(result.amountPlanks).toBe(10_000);
-    // plancksPerCent is 10_000 for the CASH token → amountCents = floor(10000 / 10000) = 1
+    // plancksPerCent is 10_000 for the CASH TOKEN → amountCents = floor(10000 / 10000) = 1
     expect(result.amountCents).toBe(Math.floor(10_000 / 10_000));
     expect(result.terminalId).toBe("term-001");
     expect(result.lockAmount).toBe(false);

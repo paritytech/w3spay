@@ -101,7 +101,7 @@ export function messageForPaymentError(caught: unknown): string {
  * intentionally narrow so the dashboard's `journey.failure_reason`
  * filter has stable values:
  *
- *   - `balance-low`       customer doesn't have enough CASH
+ *   - `balance-low`       customer doesn't have enough CASH TOKEN
  *   - `host-unavailable`  host lost / never connected
  *   - `auth-disconnected` customer's account isn't connected
  *   - `payment-denied`    host explicitly refused the payment

@@ -3,7 +3,7 @@
 
 /**
  * Paying — interstitial during `host.paymentRequest`. Shows the running
- * total in CASH and a calming spinner; no actions.
+ * total in CASH TOKEN and a calming spinner; no actions.
  */
 
 import { Dotted, Eyebrow, Frame, Head, MetaRow, Sub } from "@/shared/components/primitives.tsx";
