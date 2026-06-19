@@ -263,6 +263,7 @@ export function usePaymentActions(): PaymentActions {
     journeyTracker.start("w3spay:customer-pay", {
       "payment.tipped": tipCents > 0,
       "payment.table_source": merchantTableSource ?? "unknown",
+      "payment.amount_cents": totalCents,
     });
     navigateForStage({ kind: "paying", parsed, merchant, tipCents });
 
@@ -286,6 +287,10 @@ export function usePaymentActions(): PaymentActions {
     // moved money; a local-write failure must never read back as payError.
     journeyTracker.complete("w3spay:customer-pay", {
       "payment.settlement": payment.settlement === "unconfirmed" ? "unconfirmed" : "settled",
+      // `unconfirmed` = host accepted but never terminally confirmed (money may
+      // have moved) — the payer-side "didn't fully complete" signal.
+      "payment.outcome": payment.settlement === "unconfirmed" ? "unconfirmed" : "settled",
+      "payment.sad": payment.settlement === "unconfirmed" ? "true" : "false",
     });
     navigateForStage({ kind: "done", parsed, merchant, tipCents, payment });
 
