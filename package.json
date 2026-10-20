@@ -42,7 +42,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.0.4",
-    "bulletin-deploy": "^0.10.0",
+    "bulletin-deploy": "^0.23.0",
     "esbuild": "^0.27.7",
     "tsx": "^4.21.0",
     "typescript": "^5",
